@@ -8,7 +8,7 @@
 #   pre-commit install
 #   pre-commit run --all-files
 #
-# Author: OSI Development Team
+# Author: Ethan Li
 # License: MIT
 
 repos:

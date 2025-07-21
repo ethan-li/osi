@@ -174,5 +174,6 @@ tests/htmlcov/
 
 # Development documentation (internal use only)
 *_SUMMARY.md
+*_REPORT.md
 GITHUB_UPLOAD_GUIDE.md
 debug_wheel.py
