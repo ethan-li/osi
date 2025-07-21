@@ -9,9 +9,9 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .wheel_manager import WheelManager, WheelInfo
 from .pyproject_parser import PyProjectParser
 from .tool_config import ToolConfig
+from .wheel_manager import WheelInfo, WheelManager
 
 
 class ConfigManager:
@@ -27,9 +27,7 @@ class ConfigManager:
         self._config_cache: Dict[str, ToolConfig] = {}
         self.wheel_manager = WheelManager()
         self.pyproject_parser = PyProjectParser()
-    
 
-    
     def tool_exists(self, tool_name: str) -> bool:
         """
         Check if a wheel-based tool exists.
@@ -43,8 +41,10 @@ class ConfigManager:
         # Check for wheel-based tool
         wheel_info = self.wheel_manager.find_wheel_by_name(tool_name)
         return wheel_info is not None
-    
-    def load_tool_config(self, tool_name: str, use_cache: bool = True) -> Optional[ToolConfig]:
+
+    def load_tool_config(
+        self, tool_name: str, use_cache: bool = True
+    ) -> Optional[ToolConfig]:
         """
         Load a wheel-based tool's configuration.
 
@@ -63,7 +63,9 @@ class ConfigManager:
             # Load from wheel
             tool_config = self._load_from_wheel(tool_name)
             if not tool_config:
-                self.logger.error(f"Wheel-based tool configuration not found for {tool_name}")
+                self.logger.error(
+                    f"Wheel-based tool configuration not found for {tool_name}"
+                )
                 return None
 
             self.logger.info(f"Loaded configuration for {tool_name} from wheel")
@@ -76,8 +78,6 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to load configuration for {tool_name}: {e}")
             return None
-
-
 
     def _load_from_wheel(self, tool_name: str) -> Optional[ToolConfig]:
         """Load configuration from wheel metadata."""
@@ -94,8 +94,6 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to load from wheel: {e}")
             return None
-
-
 
     def list_tools(self) -> List[str]:
         """
@@ -147,7 +145,9 @@ class ConfigManager:
                 return False
 
             # Check that at least one entry point is specified
-            if not any([config.entry_point, config.module, config.script, config.command]):
+            if not any(
+                [config.entry_point, config.module, config.script, config.command]
+            ):
                 self.logger.error(f"Tool {tool_name} has no entry point specified")
                 return False
 
@@ -176,7 +176,9 @@ class ConfigManager:
             if wheel_info:
                 wheel_deps = self.wheel_manager.get_wheel_dependencies(wheel_info)
                 dependencies.extend(wheel_deps)
-                self.logger.debug(f"Found {len(wheel_deps)} dependencies from wheel for {tool_name}")
+                self.logger.debug(
+                    f"Found {len(wheel_deps)} dependencies from wheel for {tool_name}"
+                )
             else:
                 self.logger.warning(f"No wheel found for tool {tool_name}")
 
@@ -193,8 +195,6 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Failed to get dependencies for {tool_name}: {e}")
             return []
-
-
 
     def clear_cache(self) -> None:
         """Clear the configuration cache."""
@@ -261,7 +261,9 @@ class ConfigManager:
         """
         try:
             if not kit_path.exists() or not kit_path.is_dir():
-                self.logger.error(f"Kit path does not exist or is not a directory: {kit_path}")
+                self.logger.error(
+                    f"Kit path does not exist or is not a directory: {kit_path}"
+                )
                 return False
 
             # Find all wheel files in the kit
@@ -274,7 +276,9 @@ class ConfigManager:
             success = self.wheel_manager.create_kit_from_wheels(kit_name, wheel_files)
 
             if success:
-                self.logger.info(f"Successfully installed kit {kit_name} with {len(wheel_files)} tools")
+                self.logger.info(
+                    f"Successfully installed kit {kit_name} with {len(wheel_files)} tools"
+                )
                 # Clear cache to pick up new tools
                 self.clear_cache()
 

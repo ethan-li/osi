@@ -6,8 +6,8 @@ This script serves as the main entry point for OSI on all platforms.
 It handles Python path detection and launches the main OSI application.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add the OSI package to the Python path
@@ -16,6 +16,7 @@ sys.path.insert(0, str(osi_root))
 
 try:
     from osi.launcher import main
+
     sys.exit(main())
 except ImportError as e:
     print(f"Error: Failed to import OSI modules: {e}")

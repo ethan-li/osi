@@ -26,8 +26,8 @@ To run specific test methods:
     python -m unittest tests.test_config_manager.TestConfigManager.test_load_tool_config
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add the parent directory to the Python path so tests can import osi modules
@@ -40,11 +40,13 @@ TEST_DATA_DIR = test_dir / "data"
 TEST_WHEELS_DIR = test_dir / "wheels"
 TEST_KITS_DIR = test_dir / "kits"
 
+
 def ensure_test_directories():
     """Ensure test data directories exist."""
     TEST_DATA_DIR.mkdir(exist_ok=True)
     TEST_WHEELS_DIR.mkdir(exist_ok=True)
     TEST_KITS_DIR.mkdir(exist_ok=True)
+
 
 # Initialize test directories
 ensure_test_directories()

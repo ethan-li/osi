@@ -6,10 +6,11 @@ This script creates multiple distribution formats for OSI to support
 different deployment scenarios and user preferences.
 """
 
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
+
 
 def build_executable():
     """Build PyInstaller executable."""
@@ -17,50 +18,54 @@ def build_executable():
     print("-" * 40)
 
     try:
-        result = subprocess.run([
-            sys.executable, "build_scripts/build_pyinstaller.py"
-        ], check=True)
+        result = subprocess.run(
+            [sys.executable, "build_scripts/build_pyinstaller.py"], check=True
+        )
         return result.returncode == 0
     except subprocess.CalledProcessError:
         print("❌ Executable build failed")
         return False
 
+
 def build_portable():
     """Build portable Python distribution."""
     print("\n📦 Building Portable Distribution")
     print("-" * 40)
-    
+
     try:
-        result = subprocess.run([
-            sys.executable, "build_scripts/build_portable.py"
-        ], check=True)
+        result = subprocess.run(
+            [sys.executable, "build_scripts/build_portable.py"], check=True
+        )
         return result.returncode == 0
     except subprocess.CalledProcessError:
         print("❌ Portable build failed")
         return False
 
+
 def build_docker():
     """Build Docker distribution."""
     print("\n🐳 Building Docker Distribution")
     print("-" * 40)
-    
+
     try:
-        result = subprocess.run([
-            sys.executable, "build_scripts/build_docker.py"
-        ], check=True)
+        result = subprocess.run(
+            [sys.executable, "build_scripts/build_docker.py"], check=True
+        )
         return result.returncode == 0
     except subprocess.CalledProcessError:
         print("❌ Docker build failed")
         return False
 
+
 def test_installer():
     """Test the self-contained installer."""
     print("\n🧪 Testing Self-contained Installer")
     print("-" * 40)
-    
+
     print("✅ Self-contained installer ready: install_osi.py")
     print("   Users can run: python install_osi.py")
     return True
+
 
 def create_distribution_summary():
     """Create a summary of all distribution methods."""
@@ -139,57 +144,66 @@ OSI provides multiple distribution methods to accommodate different user needs a
 
 For detailed instructions, see the README file included with each distribution method.
 """
-    
+
     with open("DISTRIBUTION_GUIDE.md", "w") as f:
         f.write(summary)
-    
+
     print("✅ Distribution guide created: DISTRIBUTION_GUIDE.md")
+
 
 def main():
     """Main build process."""
     parser = argparse.ArgumentParser(description="Build OSI distributions")
     parser.add_argument("--all", action="store_true", help="Build all distributions")
-    parser.add_argument("--executable", action="store_true", help="Build PyInstaller executable")
-    parser.add_argument("--portable", action="store_true", help="Build portable distribution")
-    parser.add_argument("--docker", action="store_true", help="Build Docker distribution")
-    parser.add_argument("--installer", action="store_true", help="Test installer script")
-    
+    parser.add_argument(
+        "--executable", action="store_true", help="Build PyInstaller executable"
+    )
+    parser.add_argument(
+        "--portable", action="store_true", help="Build portable distribution"
+    )
+    parser.add_argument(
+        "--docker", action="store_true", help="Build Docker distribution"
+    )
+    parser.add_argument(
+        "--installer", action="store_true", help="Test installer script"
+    )
+
     args = parser.parse_args()
-    
+
     if not any([args.all, args.executable, args.portable, args.docker, args.installer]):
         args.all = True  # Default to building all
-    
+
     print("OSI Distribution Builder")
     print("=" * 50)
-    
+
     results = {}
-    
+
     # Create build_scripts directory if it doesn't exist
     Path("build_scripts").mkdir(exist_ok=True)
-    
+
     if args.all or args.installer:
         results["installer"] = test_installer()
-    
+
     if args.all or args.executable:
         results["executable"] = build_executable()
-    
+
     if args.all or args.portable:
         results["portable"] = build_portable()
-    
+
     if args.all or args.docker:
         results["docker"] = build_docker()
-    
+
     # Create distribution summary
     create_distribution_summary()
-    
+
     # Print results
     print("\n" + "=" * 50)
     print("📊 Build Results Summary")
     print("-" * 50)
-    
+
     success_count = 0
     total_count = 0
-    
+
     for method, success in results.items():
         total_count += 1
         if success:
@@ -197,9 +211,11 @@ def main():
             print(f"✅ {method.capitalize()}: SUCCESS")
         else:
             print(f"❌ {method.capitalize()}: FAILED")
-    
-    print(f"\n📈 Overall: {success_count}/{total_count} distributions built successfully")
-    
+
+    print(
+        f"\n📈 Overall: {success_count}/{total_count} distributions built successfully"
+    )
+
     if success_count == total_count:
         print("\n🎉 All distributions built successfully!")
         print("\n📋 Next steps:")
@@ -212,6 +228,7 @@ def main():
         print(f"\n⚠️  {total_count - success_count} distributions failed")
         print("Check the output above for error details")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

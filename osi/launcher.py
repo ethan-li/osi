@@ -5,44 +5,44 @@ Main entry point and command-line interface for the OSI system.
 Handles tool execution, environment management, and user interactions.
 """
 
-import sys
-import os
 import argparse
 import logging
+import os
+import sys
 from pathlib import Path
 from typing import List, Optional
 
 from .config_manager import ConfigManager
-from .environment_manager import EnvironmentManager
 from .dependency_resolver import DependencyResolver
-from .utils import setup_logging, get_platform_info, validate_python_version
+from .environment_manager import EnvironmentManager
+from .utils import get_platform_info, setup_logging, validate_python_version
 
 
 class Launcher:
     """
     Main launcher class for OSI.
-    
+
     Provides command-line interface and coordinates between all components
     to manage tool execution and environment management.
     """
-    
+
     def __init__(self):
         self.config_manager = ConfigManager()
         self.env_manager = EnvironmentManager()
         self.dependency_resolver = DependencyResolver()
         self.logger = logging.getLogger(__name__)
-    
+
     def list_tools(self) -> None:
         """List all available tools."""
         tools = self.config_manager.list_tools()
-        
+
         if not tools:
             print("No tools available.")
             return
-        
+
         print("Available tools:")
         print("-" * 50)
-        
+
         for tool_name in tools:
             config = self.config_manager.load_tool_config(tool_name)
             if config:
@@ -50,7 +50,7 @@ class Launcher:
                 print(f"{status} {tool_name:<20} - {config.description}")
             else:
                 print(f"✗ {tool_name:<20} - (configuration error)")
-    
+
     def install_tool(self, tool_name: str) -> bool:
         """
         Install a wheel-based tool and its dependencies.
@@ -79,7 +79,9 @@ class Launcher:
 
         except Exception as e:
             self.logger.error(f"Failed to install tool {tool_name}: {e}")
-            print(f"Error: Failed to install tool '{tool_name}'. Check logs for details.")
+            print(
+                f"Error: Failed to install tool '{tool_name}'. Check logs for details."
+            )
             return False
 
     def _install_wheel_based_tool(self, tool_name: str, wheel_info) -> bool:
@@ -107,65 +109,60 @@ class Launcher:
             self.logger.error(f"Failed to install wheel-based tool {tool_name}: {e}")
             return False
 
-
-    
     def run_tool(self, tool_name: str, args: List[str] = None) -> int:
         """
         Run a tool with the given arguments.
-        
+
         Args:
             tool_name: Name of the tool to run
             args: Arguments to pass to the tool
-            
+
         Returns:
             Exit code from the tool
         """
         try:
             if args is None:
                 args = []
-            
+
             print(f"Running tool: {tool_name}")
-            
+
             # Check if tool exists
             if not self.config_manager.tool_exists(tool_name):
                 print(f"Error: Tool '{tool_name}' not found.")
                 return 1
-            
+
             # Load configuration
             config = self.config_manager.load_tool_config(tool_name)
             if not config:
                 print(f"Error: Failed to load configuration for '{tool_name}'.")
                 return 1
-            
+
             # Ensure dependencies are satisfied
             print("Checking dependencies...")
             if not self.dependency_resolver.ensure_tool_dependencies(tool_name):
                 print(f"Error: Failed to ensure dependencies for '{tool_name}'.")
                 return 1
-            
+
             # Determine how to run the tool
             command = self._build_run_command(config, args)
             if not command:
                 print(f"Error: No valid entry point found for '{tool_name}'.")
                 return 1
-            
+
             print(f"Executing: {' '.join(command)}")
-            
+
             # Run the tool in its environment
             result = self.env_manager.run_in_environment(
-                tool_name, 
-                command, 
-                capture_output=False,
-                check=False
+                tool_name, command, capture_output=False, check=False
             )
-            
+
             return result.returncode
-            
+
         except Exception as e:
             self.logger.error(f"Failed to run tool {tool_name}: {e}")
             print(f"Error: Failed to run tool '{tool_name}'. Check logs for details.")
             return 1
-    
+
     def _build_run_command(self, config, args: List[str]) -> Optional[List[str]]:
         """
         Build the command to run a wheel-based tool.
@@ -192,40 +189,42 @@ class Launcher:
         # If no entry point found, this shouldn't happen for valid wheels
         self.logger.error(f"No entry point found for wheel-based tool {config.name}")
         return None
-    
+
     def uninstall_tool(self, tool_name: str) -> bool:
         """
         Uninstall a tool by removing its environment.
-        
+
         Args:
             tool_name: Name of the tool to uninstall
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
             print(f"Uninstalling tool: {tool_name}")
-            
+
             if not self.env_manager.environment_exists(tool_name):
                 print(f"Tool '{tool_name}' is not installed.")
                 return True
-            
+
             if self.env_manager.remove_environment(tool_name):
                 print(f"Successfully uninstalled tool: {tool_name}")
                 return True
             else:
                 print(f"Error: Failed to uninstall tool '{tool_name}'.")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Failed to uninstall tool {tool_name}: {e}")
-            print(f"Error: Failed to uninstall tool '{tool_name}'. Check logs for details.")
+            print(
+                f"Error: Failed to uninstall tool '{tool_name}'. Check logs for details."
+            )
             return False
-    
+
     def show_tool_info(self, tool_name: str) -> None:
         """
         Show detailed information about a tool.
-        
+
         Args:
             tool_name: Name of the tool
         """
@@ -233,12 +232,12 @@ class Launcher:
             if not self.config_manager.tool_exists(tool_name):
                 print(f"Error: Tool '{tool_name}' not found.")
                 return
-            
+
             config = self.config_manager.load_tool_config(tool_name)
             if not config:
                 print(f"Error: Failed to load configuration for '{tool_name}'.")
                 return
-            
+
             # Basic info
             print(f"Tool: {config.name}")
             print(f"Version: {config.version}")
@@ -246,67 +245,73 @@ class Launcher:
             print(f"Author: {config.author}")
             print(f"License: {config.license}")
             print()
-            
+
             # Environment status
             env_exists = self.env_manager.environment_exists(tool_name)
             print(f"Environment: {'Installed' if env_exists else 'Not installed'}")
-            
+
             if env_exists:
-                deps_satisfied = self.dependency_resolver.check_dependencies_satisfied(tool_name)
-                print(f"Dependencies: {'Satisfied' if deps_satisfied else 'Missing/Outdated'}")
-            
+                deps_satisfied = self.dependency_resolver.check_dependencies_satisfied(
+                    tool_name
+                )
+                print(
+                    f"Dependencies: {'Satisfied' if deps_satisfied else 'Missing/Outdated'}"
+                )
+
             print()
-            
+
             # Dependencies
             deps_info = self.dependency_resolver.get_dependency_info(tool_name)
             print("Dependencies:")
-            if deps_info['required']:
-                for dep in deps_info['required']:
-                    status = "✓" if dep not in deps_info['missing'] else "✗"
+            if deps_info["required"]:
+                for dep in deps_info["required"]:
+                    status = "✓" if dep not in deps_info["missing"] else "✗"
                     print(f"  {status} {dep}")
             else:
                 print("  None")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to show info for tool {tool_name}: {e}")
-            print(f"Error: Failed to get information for '{tool_name}'. Check logs for details.")
-    
+            print(
+                f"Error: Failed to get information for '{tool_name}'. Check logs for details."
+            )
+
     def doctor(self) -> None:
         """Run diagnostic checks on the OSI system."""
         print("OSI System Diagnostics")
         print("=" * 50)
-        
+
         # Python version check
         if validate_python_version():
             print("✓ Python version is compatible")
         else:
             print("✗ Python version is too old (requires 3.11+)")
-        
+
         # Platform info
         platform_info = get_platform_info()
         print(f"✓ Platform: {platform_info['system']} {platform_info['machine']}")
         print(f"✓ Python: {platform_info['python_version']}")
-        
+
         # Check environments
         environments = self.env_manager.list_environments()
         print(f"✓ Found {len(environments)} tool environments")
-        
+
         # Check tools
         tools = self.config_manager.list_tools()
         print(f"✓ Found {len(tools)} configured tools")
-        
+
         # Check for issues
         issues = 0
         for tool_name in tools:
             if not self.config_manager.validate_tool_config(tool_name):
                 print(f"✗ Tool '{tool_name}' has invalid configuration")
                 issues += 1
-        
+
         if issues == 0:
             print("✓ All tool configurations are valid")
-        
+
         print(f"\nDiagnostics complete. Found {issues} issues.")
-    
+
     def clean(self) -> None:
         """Clean up all environments and caches."""
         print("Cleaning OSI system...")
@@ -392,7 +397,9 @@ class Launcher:
             for tool_name in tools:
                 config = self.config_manager.load_tool_config(tool_name)
                 if config:
-                    status = "✓" if self.env_manager.environment_exists(tool_name) else "✗"
+                    status = (
+                        "✓" if self.env_manager.environment_exists(tool_name) else "✗"
+                    )
                     print(f"{status} {tool_name:<20} - {config.description}")
                 else:
                     print(f"✗ {tool_name:<20} - (configuration error)")
@@ -405,8 +412,8 @@ class Launcher:
 def create_parser() -> argparse.ArgumentParser:
     """Create the command-line argument parser."""
     parser = argparse.ArgumentParser(
-        prog='osi',
-        description='OSI - Organized Software Installer for Python tools',
+        prog="osi",
+        description="OSI - Organized Software Installer for Python tools",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -416,58 +423,62 @@ Examples:
   osi info my_tool            # Show detailed tool information
   osi doctor                  # Run system diagnostics
   osi clean                   # Clean all environments
-        """
+        """,
     )
 
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose logging'
+        "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
 
     parser.add_argument(
-        '--log-level',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Set logging level'
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Set logging level",
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
-    subparsers.add_parser('list', help='List all available tools')
+    subparsers.add_parser("list", help="List all available tools")
 
     # Install command
-    install_parser = subparsers.add_parser('install', help='Install a tool')
-    install_parser.add_argument('tool', help='Name of the tool to install')
+    install_parser = subparsers.add_parser("install", help="Install a tool")
+    install_parser.add_argument("tool", help="Name of the tool to install")
 
     # Run command
-    run_parser = subparsers.add_parser('run', help='Run a tool')
-    run_parser.add_argument('tool', help='Name of the tool to run')
-    run_parser.add_argument('args', nargs='*', help='Arguments to pass to the tool')
+    run_parser = subparsers.add_parser("run", help="Run a tool")
+    run_parser.add_argument("tool", help="Name of the tool to run")
+    run_parser.add_argument("args", nargs="*", help="Arguments to pass to the tool")
 
     # Uninstall command
-    uninstall_parser = subparsers.add_parser('uninstall', help='Uninstall a tool')
-    uninstall_parser.add_argument('tool', help='Name of the tool to uninstall')
+    uninstall_parser = subparsers.add_parser("uninstall", help="Uninstall a tool")
+    uninstall_parser.add_argument("tool", help="Name of the tool to uninstall")
 
     # Info command
-    info_parser = subparsers.add_parser('info', help='Show tool information')
-    info_parser.add_argument('tool', help='Name of the tool')
+    info_parser = subparsers.add_parser("info", help="Show tool information")
+    info_parser.add_argument("tool", help="Name of the tool")
 
     # Doctor command
-    subparsers.add_parser('doctor', help='Run system diagnostics')
+    subparsers.add_parser("doctor", help="Run system diagnostics")
 
     # Clean command
-    subparsers.add_parser('clean', help='Clean all environments and caches')
+    subparsers.add_parser("clean", help="Clean all environments and caches")
 
     # Kit management commands
-    subparsers.add_parser('list-kits', help='List all available tool kits')
+    subparsers.add_parser("list-kits", help="List all available tool kits")
 
-    install_kit_parser = subparsers.add_parser('install-kit', help='Install a kit from a directory')
-    install_kit_parser.add_argument('kit_path', help='Path to directory containing .whl files')
+    install_kit_parser = subparsers.add_parser(
+        "install-kit", help="Install a kit from a directory"
+    )
+    install_kit_parser.add_argument(
+        "kit_path", help="Path to directory containing .whl files"
+    )
 
-    kit_info_parser = subparsers.add_parser('kit-info', help='Show information about a kit')
-    kit_info_parser.add_argument('kit', help='Name of the kit')
+    kit_info_parser = subparsers.add_parser(
+        "kit-info", help="Show information about a kit"
+    )
+    kit_info_parser.add_argument("kit", help="Name of the kit")
 
     return parser
 
@@ -488,49 +499,49 @@ def main(argv: Optional[List[str]] = None) -> int:
         args = parser.parse_args(argv)
 
         # Set up logging
-        log_level = 'DEBUG' if args.verbose else args.log_level
+        log_level = "DEBUG" if args.verbose else args.log_level
         setup_logging(log_level)
 
         # Create launcher
         launcher = Launcher()
 
         # Handle commands
-        if args.command == 'list':
+        if args.command == "list":
             launcher.list_tools()
             return 0
 
-        elif args.command == 'install':
+        elif args.command == "install":
             success = launcher.install_tool(args.tool)
             return 0 if success else 1
 
-        elif args.command == 'run':
+        elif args.command == "run":
             return launcher.run_tool(args.tool, args.args)
 
-        elif args.command == 'uninstall':
+        elif args.command == "uninstall":
             success = launcher.uninstall_tool(args.tool)
             return 0 if success else 1
 
-        elif args.command == 'info':
+        elif args.command == "info":
             launcher.show_tool_info(args.tool)
             return 0
 
-        elif args.command == 'doctor':
+        elif args.command == "doctor":
             launcher.doctor()
             return 0
 
-        elif args.command == 'clean':
+        elif args.command == "clean":
             launcher.clean()
             return 0
 
-        elif args.command == 'list-kits':
+        elif args.command == "list-kits":
             launcher.list_kits()
             return 0
 
-        elif args.command == 'install-kit':
+        elif args.command == "install-kit":
             success = launcher.install_kit(args.kit_path)
             return 0 if success else 1
 
-        elif args.command == 'kit-info':
+        elif args.command == "kit-info":
             launcher.show_kit_info(args.kit)
             return 0
 
@@ -549,5 +560,5 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

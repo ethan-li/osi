@@ -8,17 +8,19 @@ It will automatically set up everything needed to run OSI tools.
 For users: Just run "python quick_start.py" and follow the prompts.
 """
 
-import sys
-import subprocess
-import urllib.request
-import tempfile
-import zipfile
 import shutil
+import subprocess
+import sys
+import tempfile
+import urllib.request
+import zipfile
 from pathlib import Path
+
 
 def print_banner():
     """Print welcome banner."""
-    print("""
+    print(
+        """
 ╔══════════════════════════════════════════════════════════════╗
 ║                    OSI Quick Start                           ║
 ║              Organized Software Installer                   ║
@@ -26,37 +28,40 @@ def print_banner():
 ║  This script will automatically set up OSI with all         ║
 ║  dependencies. No manual installation required!             ║
 ╚══════════════════════════════════════════════════════════════╝
-""")
+"""
+    )
+
 
 def check_requirements():
     """Check if basic requirements are met."""
     print("🔍 Checking system requirements...")
-    
+
     # Check Python version
     if sys.version_info < (3, 11):
         print(f"❌ Python 3.11+ required. Current: {sys.version.split()[0]}")
         print("Please install a newer version of Python and try again.")
         return False
-    
+
     print(f"✅ Python {sys.version.split()[0]} - OK")
-    
+
     # Check internet connection
     try:
-        urllib.request.urlopen('https://www.google.com', timeout=5)
+        urllib.request.urlopen("https://www.google.com", timeout=5)
         print("✅ Internet connection - OK")
     except:
         print("⚠️  Internet connection not available")
         print("   Some features may not work without internet access")
-    
+
     return True
+
 
 def download_osi():
     """Download OSI source code from GitHub."""
     print("\n📥 Downloading OSI from GitHub...")
 
+    import shutil
     import tempfile
     import zipfile
-    import shutil
 
     # Create temporary directory
     temp_dir = Path(tempfile.mkdtemp())
@@ -71,7 +76,7 @@ def download_osi():
 
         # Extract the zip file
         print("Extracting files...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(temp_dir)
 
         # Find the extracted directory (should be osi-main)
@@ -95,61 +100,68 @@ def download_osi():
         print("Please check your internet connection and try again")
         return None
 
+
 def setup_osi(source_dir):
     """Set up OSI in user's home directory."""
     print("\n🔧 Setting up OSI...")
-    
+
     # Create OSI directory in user's home
     osi_home = Path.home() / ".osi"
-    
+
     if osi_home.exists():
         print("Removing existing OSI installation...")
         import shutil
+
         shutil.rmtree(osi_home)
-    
+
     osi_home.mkdir(parents=True)
-    
+
     # Create virtual environment
     venv_dir = osi_home / "venv"
     print("Creating isolated environment...")
     subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True)
-    
+
     # Get Python executable
     if sys.platform == "win32":
         python_exe = venv_dir / "Scripts" / "python.exe"
     else:
         python_exe = venv_dir / "bin" / "python"
-    
+
     # Install dependencies
     print("Installing dependencies...")
     deps = ["toml", "packaging", "virtualenv", "pkginfo"]
     for dep in deps:
-        subprocess.run([str(python_exe), "-m", "pip", "install", dep], 
-                      check=True, capture_output=True)
-    
+        subprocess.run(
+            [str(python_exe), "-m", "pip", "install", dep],
+            check=True,
+            capture_output=True,
+        )
+
     # Copy OSI source
     print("Installing OSI...")
     import shutil
+
     shutil.copytree(source_dir / "osi", osi_home / "osi")
     shutil.copytree(source_dir / "scripts", osi_home / "scripts")
-    
+
     # Copy kits and wheels if they exist
     for dir_name in ["kits", "wheels"]:
         src_dir = source_dir / dir_name
         if src_dir.exists():
             shutil.copytree(src_dir, osi_home / dir_name)
-    
+
     return osi_home, python_exe
+
 
 def create_launcher(osi_home, python_exe):
     """Create easy-to-use launcher."""
     print("\n🚀 Creating launcher...")
-    
+
     launcher_dir = osi_home / "bin"
     launcher_dir.mkdir(exist_ok=True)
-    
+
     osi_script = osi_home / "scripts" / "osi.py"
-    
+
     if sys.platform == "win32":
         # Windows batch file
         launcher = launcher_dir / "osi.bat"
@@ -161,16 +173,18 @@ def create_launcher(osi_home, python_exe):
         with open(launcher, "w") as f:
             f.write(f'#!/bin/bash\n"{python_exe}" "{osi_script}" "$@"\n')
         launcher.chmod(0o755)
-    
+
     return launcher
+
 
 def test_installation(launcher):
     """Test the OSI installation."""
     print("\n🧪 Testing installation...")
-    
+
     try:
-        result = subprocess.run([str(launcher), "--help"], 
-                              capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            [str(launcher), "--help"], capture_output=True, text=True, timeout=10
+        )
         if result.returncode == 0:
             print("✅ OSI installation successful!")
             return True
@@ -181,9 +195,11 @@ def test_installation(launcher):
         print(f"❌ Test failed: {e}")
         return False
 
+
 def show_usage_instructions(launcher):
     """Show how to use OSI."""
-    print(f"""
+    print(
+        f"""
 🎉 OSI is ready to use!
 
 📍 Installation location: {launcher.parent.parent}
@@ -210,53 +226,55 @@ def show_usage_instructions(launcher):
   - Logs are saved in: {launcher.parent.parent}/logs/
 
 🆘 Need help? Run: {launcher} --help
-""")
+"""
+    )
+
 
 def main():
     """Main quick start process."""
     print_banner()
-    
+
     try:
         # Step 1: Check requirements
         if not check_requirements():
             input("\nPress Enter to exit...")
             return 1
-        
+
         # Step 2: Download OSI
         source_dir = download_osi()
         if not source_dir:
             input("\nPress Enter to exit...")
             return 1
-        
+
         # Step 3: Set up OSI
         osi_home, python_exe = setup_osi(source_dir)
-        
+
         # Step 4: Create launcher
         launcher = create_launcher(osi_home, python_exe)
-        
+
         # Step 5: Test installation
         if not test_installation(launcher):
             input("\nPress Enter to exit...")
             return 1
-        
+
         # Step 6: Show usage instructions
         show_usage_instructions(launcher)
-        
-        print("\n" + "="*60)
+
+        print("\n" + "=" * 60)
         print("✅ OSI Quick Start completed successfully!")
         print("You can now close this window and start using OSI.")
-        
+
         # Ask if user wants to try a command
         try:
             response = input("\nWould you like to try 'osi list' now? (y/n): ")
-            if response.lower().startswith('y'):
+            if response.lower().startswith("y"):
                 print(f"\nRunning: {launcher} list")
                 subprocess.run([str(launcher), "list"])
         except KeyboardInterrupt:
             pass
-        
+
         return 0
-        
+
     except KeyboardInterrupt:
         print("\n\n❌ Setup cancelled by user")
         return 1
@@ -268,6 +286,7 @@ def main():
         print("3. Try running as administrator (Windows) or with sudo (Linux/macOS)")
         input("\nPress Enter to exit...")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
