@@ -71,10 +71,12 @@ class TestDistributionScripts(unittest.TestCase):
             script_path = self.project_root / script
             if script_path.exists():
                 try:
-                    with open(script_path, "r") as f:
+                    with open(script_path, "r", encoding="utf-8") as f:
                         compile(f.read(), str(script_path), "exec")
                 except SyntaxError as e:
                     self.fail(f"Syntax error in {script}: {e}")
+                except UnicodeDecodeError as e:
+                    self.fail(f"Unicode decode error in {script}: {e}")
 
     def test_build_scripts_syntax(self):
         """Test that build scripts have valid Python syntax."""
@@ -83,10 +85,12 @@ class TestDistributionScripts(unittest.TestCase):
         if build_scripts_dir.exists():
             for script_path in build_scripts_dir.glob("*.py"):
                 try:
-                    with open(script_path, "r") as f:
+                    with open(script_path, "r", encoding="utf-8") as f:
                         compile(f.read(), str(script_path), "exec")
                 except SyntaxError as e:
                     self.fail(f"Syntax error in {script_path.name}: {e}")
+                except UnicodeDecodeError as e:
+                    self.fail(f"Unicode decode error in {script_path.name}: {e}")
 
 
 class TestDockerConfiguration(unittest.TestCase):

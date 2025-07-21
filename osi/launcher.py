@@ -46,10 +46,10 @@ class Launcher:
         for tool_name in tools:
             config = self.config_manager.load_tool_config(tool_name)
             if config:
-                status = "✓" if self.env_manager.environment_exists(tool_name) else "✗"
+                status = "[OK]" if self.env_manager.environment_exists(tool_name) else "[!]"
                 print(f"{status} {tool_name:<20} - {config.description}")
             else:
-                print(f"✗ {tool_name:<20} - (configuration error)")
+                print(f"[!] {tool_name:<20} - (configuration error)")
 
     def install_tool(self, tool_name: str) -> bool:
         """
@@ -269,9 +269,9 @@ class Launcher:
             if required_deps and isinstance(required_deps, list):
                 for dep in required_deps:
                     status = (
-                        "✓"
+                        "[OK]"
                         if isinstance(missing_deps, list) and dep not in missing_deps
-                        else "✗"
+                        else "[!]"
                     )
                     print(f"  {status} {dep}")
             else:
@@ -290,32 +290,32 @@ class Launcher:
 
         # Python version check
         if validate_python_version():
-            print("✓ Python version is compatible")
+            print("[OK] Python version is compatible")
         else:
-            print("✗ Python version is too old (requires 3.11+)")
+            print("[!] Python version is too old (requires 3.11+)")
 
         # Platform info
         platform_info = get_platform_info()
-        print(f"✓ Platform: {platform_info['system']} {platform_info['machine']}")
-        print(f"✓ Python: {platform_info['python_version']}")
+        print(f"[OK] Platform: {platform_info['system']} {platform_info['machine']}")
+        print(f"[OK] Python: {platform_info['python_version']}")
 
         # Check environments
         environments = self.env_manager.list_environments()
-        print(f"✓ Found {len(environments)} tool environments")
+        print(f"[OK] Found {len(environments)} tool environments")
 
         # Check tools
         tools = self.config_manager.list_tools()
-        print(f"✓ Found {len(tools)} configured tools")
+        print(f"[OK] Found {len(tools)} configured tools")
 
         # Check for issues
         issues = 0
         for tool_name in tools:
             if not self.config_manager.validate_tool_config(tool_name):
-                print(f"✗ Tool '{tool_name}' has invalid configuration")
+                print(f"[!] Tool '{tool_name}' has invalid configuration")
                 issues += 1
 
         if issues == 0:
-            print("✓ All tool configurations are valid")
+            print("[OK] All tool configurations are valid")
 
         print(f"\nDiagnostics complete. Found {issues} issues.")
 
@@ -405,11 +405,11 @@ class Launcher:
                 config = self.config_manager.load_tool_config(tool_name)
                 if config:
                     status = (
-                        "✓" if self.env_manager.environment_exists(tool_name) else "✗"
+                        "[OK]" if self.env_manager.environment_exists(tool_name) else "[!]"
                     )
                     print(f"{status} {tool_name:<20} - {config.description}")
                 else:
-                    print(f"✗ {tool_name:<20} - (configuration error)")
+                    print(f"[!] {tool_name:<20} - (configuration error)")
 
         except Exception as e:
             self.logger.error(f"Failed to show kit info: {e}")
