@@ -26,7 +26,7 @@ class PyProjectConfig:
     name: str
     version: str = "1.0.0"
     description: str = ""
-    authors: List[str] = field(default_factory=list)
+    authors: List[Union[str, Dict[str, str]]] = field(default_factory=list)
     license: str = ""
     readme: str = ""
     homepage: str = ""
@@ -114,7 +114,7 @@ class PyProjectParser:
     and converts them to OSI-compatible format.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
     def parse_file(self, pyproject_path: Path) -> Optional[PyProjectConfig]:
@@ -211,7 +211,7 @@ class PyProjectParser:
             if isinstance(license_info, dict):
                 license_str = license_info.get("text", license_info.get("file", ""))
             else:
-                license_str = str(license_info)
+                license_str = str(license_info) if license_info else ""
 
             # Extract OSI-specific configuration
             osi_config = data.get("tool", {}).get("osi", {})
@@ -221,7 +221,7 @@ class PyProjectParser:
                 version=str(version),
                 description=project.get("description", ""),
                 authors=authors,
-                license=license_str,
+                license=license_str or "",
                 readme=project.get("readme", ""),
                 homepage=homepage,
                 repository=repository,
@@ -252,7 +252,7 @@ class PyProjectParser:
         """
         try:
             # Convert wheel metadata to pyproject format
-            authors = []
+            authors: List[Union[str, Dict[str, str]]] = []
             if wheel_info.author:
                 authors = [wheel_info.author]
 

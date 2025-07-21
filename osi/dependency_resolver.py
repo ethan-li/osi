@@ -7,7 +7,7 @@ for tool installations.
 
 import logging
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from packaging import specifiers, version
 
@@ -23,12 +23,12 @@ class DependencyResolver:
     coordination between the configuration manager and environment manager.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_manager = ConfigManager()
         self.env_manager = EnvironmentManager()
         self.logger = logging.getLogger(__name__)
 
-    def parse_requirement(self, requirement: str) -> Tuple[str, Optional[str]]:
+    def parse_requirement(self, requirement: str) -> Optional[Tuple[str, Optional[str]]]:
         """
         Parse a requirement string into package name and version specifier.
 
@@ -42,7 +42,7 @@ class DependencyResolver:
             # Skip requirements with environment markers we don't want to install
             if "; extra ==" in requirement:
                 self.logger.debug(f"Skipping conditional requirement: {requirement}")
-                return None, None
+                return None
 
             # Remove environment markers for platform-specific requirements
             if ";" in requirement:
@@ -110,11 +110,13 @@ class DependencyResolver:
             missing_deps = []
 
             for requirement in required_deps:
-                package_name, version_spec = self.parse_requirement(requirement)
+                parsed_req = self.parse_requirement(requirement)
 
                 # Skip requirements that were filtered out (e.g., dev dependencies)
-                if package_name is None:
+                if parsed_req is None:
                     continue
+
+                package_name, version_spec = parsed_req
 
                 if package_name not in installed_packages:
                     # Package not installed at all
@@ -196,14 +198,19 @@ class DependencyResolver:
             Dictionary mapping package names to conflicting requirements
         """
         try:
-            package_requirements = {}
+            package_requirements: Dict[str, List[Dict[str, Any]]] = {}
 
             # Collect all requirements from all tools
             for tool_name in tools:
                 requirements = self.config_manager.get_tool_dependencies(tool_name)
 
                 for requirement in requirements:
-                    package_name, version_spec = self.parse_requirement(requirement)
+                    parsed_req = self.parse_requirement(requirement)
+
+                    if parsed_req is None:
+                        continue
+
+                    package_name, version_spec = parsed_req
 
                     if package_name not in package_requirements:
                         package_requirements[package_name] = []
@@ -217,22 +224,19 @@ class DependencyResolver:
                     )
 
             # Check for conflicts
-            conflicts = {}
+            conflicts: Dict[str, List[str]] = {}
 
-            for package_name, requirements in package_requirements.items():
-                if len(requirements) > 1:
+            for package_name, req_list in package_requirements.items():
+                if len(req_list) > 1:
                     # Multiple tools require this package, check for conflicts
-                    version_specs = [
-                        req["version_spec"]
-                        for req in requirements
-                        if req["version_spec"]
-                    ]
+                    version_specs = []
+                    for req in req_list:
+                        if req.get("version_spec"):
+                            version_specs.append(req["version_spec"])
 
                     if len(set(version_specs)) > 1:
                         # Different version specifications - potential conflict
-                        conflicts[package_name] = [
-                            req["requirement"] for req in requirements
-                        ]
+                        conflicts[package_name] = [req["requirement"] for req in req_list]
 
             return conflicts
 
@@ -285,7 +289,7 @@ class DependencyResolver:
             self.logger.error(f"Failed to ensure dependencies for {tool_name}: {e}")
             return False
 
-    def get_dependency_info(self, tool_name: str) -> Dict[str, any]:
+    def get_dependency_info(self, tool_name: str) -> Dict[str, Union[List[str], Dict[str, str], bool]]:
         """
         Get detailed dependency information for a tool.
 

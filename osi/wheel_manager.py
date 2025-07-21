@@ -15,12 +15,12 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 try:
     import pkginfo
 except ImportError:
-    pkginfo = None
+    pkginfo = None  # type: ignore
 
 from .utils import (
     ensure_directory,
@@ -62,7 +62,7 @@ class WheelManager:
     Supports both individual wheels and kit-based distributions.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.osi_root = get_osi_root()
 
@@ -145,7 +145,9 @@ class WheelManager:
             # Use pkginfo if available for better metadata extraction
             # Note: pkginfo doesn't handle entry points well, so we'll use manual extraction
             # but keep pkginfo for other metadata if needed
-            if False and pkginfo:  # Temporarily disable pkginfo
+            # Temporarily disable pkginfo due to entry points handling issues
+            use_pkginfo = False
+            if use_pkginfo and pkginfo:
                 self.logger.debug(
                     f"Using pkginfo to extract metadata from {wheel_path}"
                 )
@@ -166,20 +168,20 @@ class WheelManager:
 
             # Fallback to manual extraction
             self.logger.debug(f"Falling back to manual extraction for {wheel_path}")
-            wheel_info = self._extract_wheel_info_manually(wheel_path)
-            if wheel_info:
+            manual_wheel_info = self._extract_wheel_info_manually(wheel_path)
+            if manual_wheel_info:
                 self.logger.debug(
-                    f"Manual extraction entry points: {wheel_info.entry_points}"
+                    f"Manual extraction entry points: {manual_wheel_info.entry_points}"
                 )
-                self._wheel_cache[wheel_key] = wheel_info
+                self._wheel_cache[wheel_key] = manual_wheel_info
 
-            return wheel_info
+            return manual_wheel_info
 
         except Exception as e:
             self.logger.error(f"Failed to extract wheel info from {wheel_path}: {e}")
             return None
 
-    def _create_wheel_info_from_pkginfo(self, wheel_path: Path, metadata) -> WheelInfo:
+    def _create_wheel_info_from_pkginfo(self, wheel_path: Path, metadata: Any) -> WheelInfo:
         """Create WheelInfo from pkginfo metadata."""
         # Extract entry points
         entry_points = {}
@@ -279,13 +281,15 @@ class WheelManager:
             parser = email.parser.Parser()
             msg = parser.parsestr(metadata_content)
 
-            metadata = {}
+            metadata: Dict[str, Union[str, List[str]]] = {}
             for key, value in msg.items():
                 if key in metadata:
                     # Handle multiple values (like Requires-Dist)
-                    if not isinstance(metadata[key], list):
-                        metadata[key] = [metadata[key]]
-                    metadata[key].append(value)
+                    existing_value = metadata[key]
+                    if not isinstance(existing_value, list):
+                        metadata[key] = [existing_value, value]
+                    else:
+                        existing_value.append(value)
                 else:
                     metadata[key] = value
 

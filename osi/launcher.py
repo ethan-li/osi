@@ -10,7 +10,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from .config_manager import ConfigManager
 from .dependency_resolver import DependencyResolver
@@ -26,7 +26,7 @@ class Launcher:
     to manage tool execution and environment management.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_manager = ConfigManager()
         self.env_manager = EnvironmentManager()
         self.dependency_resolver = DependencyResolver()
@@ -84,7 +84,7 @@ class Launcher:
             )
             return False
 
-    def _install_wheel_based_tool(self, tool_name: str, wheel_info) -> bool:
+    def _install_wheel_based_tool(self, tool_name: str, wheel_info: Any) -> bool:
         """Install a wheel-based tool."""
         try:
             print(f"Installing wheel-based tool: {tool_name}")
@@ -109,7 +109,7 @@ class Launcher:
             self.logger.error(f"Failed to install wheel-based tool {tool_name}: {e}")
             return False
 
-    def run_tool(self, tool_name: str, args: List[str] = None) -> int:
+    def run_tool(self, tool_name: str, args: Optional[List[str]] = None) -> int:
         """
         Run a tool with the given arguments.
 
@@ -163,7 +163,7 @@ class Launcher:
             print(f"Error: Failed to run tool '{tool_name}'. Check logs for details.")
             return 1
 
-    def _build_run_command(self, config, args: List[str]) -> Optional[List[str]]:
+    def _build_run_command(self, config: Any, args: List[str]) -> Optional[List[str]]:
         """
         Build the command to run a wheel-based tool.
 
@@ -263,9 +263,12 @@ class Launcher:
             # Dependencies
             deps_info = self.dependency_resolver.get_dependency_info(tool_name)
             print("Dependencies:")
-            if deps_info["required"]:
-                for dep in deps_info["required"]:
-                    status = "✓" if dep not in deps_info["missing"] else "✗"
+            required_deps = deps_info.get("required", [])
+            missing_deps = deps_info.get("missing", [])
+
+            if required_deps and isinstance(required_deps, list):
+                for dep in required_deps:
+                    status = "✓" if isinstance(missing_deps, list) and dep not in missing_deps else "✗"
                     print(f"  {status} {dep}")
             else:
                 print("  None")

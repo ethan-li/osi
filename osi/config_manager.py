@@ -22,7 +22,7 @@ class ConfigManager:
     All tools are distributed as Python wheels with pyproject.toml configuration.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self._config_cache: Dict[str, ToolConfig] = {}
         self.wheel_manager = WheelManager()

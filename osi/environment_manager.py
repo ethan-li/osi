@@ -34,7 +34,7 @@ class EnvironmentManager:
     Environments are automatically created, validated, and maintained.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.environments_dir = get_environments_dir()
         self.logger = logging.getLogger(__name__)
         ensure_directory(self.environments_dir)
@@ -338,7 +338,7 @@ class EnvironmentManager:
             return []
 
     def run_in_environment(
-        self, tool_name: str, command: List[str], **kwargs
+        self, tool_name: str, command: List[str], **kwargs: Any
     ) -> subprocess.CompletedProcess:
         """
         Run a command in a tool's environment.
@@ -416,7 +416,7 @@ class EnvironmentManager:
             return False
 
     def install_wheel_with_dependencies(
-        self, tool_name: str, wheel_path: Path, dependencies: List[str] = None
+        self, tool_name: str, wheel_path: Path, dependencies: Optional[List[str]] = None
     ) -> bool:
         """
         Install a wheel file and its dependencies into a tool's environment.
