@@ -41,7 +41,7 @@ TEST_WHEELS_DIR = test_dir / "wheels"
 TEST_KITS_DIR = test_dir / "kits"
 
 
-def ensure_test_directories():
+def ensure_test_directories() -> None:
     """Ensure test data directories exist."""
     TEST_DATA_DIR.mkdir(exist_ok=True)
     TEST_WHEELS_DIR.mkdir(exist_ok=True)

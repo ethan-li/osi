@@ -55,7 +55,7 @@ class TestDistributionScripts(unittest.TestCase):
         # Check for required build scripts
         required_scripts = [
             "build_docker.py",
-            "build_executable.py",
+            "build_pyinstaller.py",
             "build_portable.py",
         ]
 

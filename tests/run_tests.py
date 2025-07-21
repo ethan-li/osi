@@ -9,16 +9,17 @@ import argparse
 import sys
 import unittest
 from pathlib import Path
+from typing import List
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-def run_all_tests(verbosity=2):
+def run_all_tests(verbosity: int = 2) -> bool:
     """Run all tests in the test suite."""
     loader = unittest.TestLoader()
     start_dir = Path(__file__).parent
-    suite = loader.discover(start_dir, pattern="test_*.py")
+    suite = loader.discover(str(start_dir), pattern="test_*.py")
 
     runner = unittest.TextTestRunner(verbosity=verbosity)
     result = runner.run(suite)
@@ -26,7 +27,7 @@ def run_all_tests(verbosity=2):
     return result.wasSuccessful()
 
 
-def run_specific_tests(test_modules, verbosity=2):
+def run_specific_tests(test_modules: List[str], verbosity: int = 2) -> bool:
     """Run specific test modules."""
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -45,12 +46,12 @@ def run_specific_tests(test_modules, verbosity=2):
     return result.wasSuccessful()
 
 
-def run_integration_tests_only(verbosity=2):
+def run_integration_tests_only(verbosity: int = 2) -> bool:
     """Run only integration tests."""
     return run_specific_tests(["test_integration"], verbosity)
 
 
-def run_unit_tests_only(verbosity=2):
+def run_unit_tests_only(verbosity: int = 2) -> bool:
     """Run only unit tests (excluding integration tests)."""
     unit_test_modules = [
         "test_config_manager",
@@ -61,7 +62,7 @@ def run_unit_tests_only(verbosity=2):
     return run_specific_tests(unit_test_modules, verbosity)
 
 
-def main():
+def main() -> int:
     """Main test runner function."""
     parser = argparse.ArgumentParser(description="OSI Test Runner")
     parser.add_argument(

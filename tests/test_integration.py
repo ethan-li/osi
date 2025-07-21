@@ -33,8 +33,13 @@ class TestWheelOnlySystem(unittest.TestCase):
         config_manager = ConfigManager()
 
         # Check that get_tools_dir function no longer exists
-        with self.assertRaises(ImportError):
-            from osi.utils import get_tools_dir
+        # This function was removed as part of wheel-only migration
+        from osi import utils
+
+        self.assertFalse(
+            hasattr(utils, "get_tools_dir"),
+            "get_tools_dir function should be removed in wheel-only system",
+        )
 
         # Check that directory-based methods are removed
         methods_to_check = [
