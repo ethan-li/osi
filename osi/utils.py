@@ -48,13 +48,21 @@ def get_script_extension() -> str:
 
 def get_osi_root() -> Path:
     """Get the root directory of the OSI installation."""
-    # Get the directory containing this file, then go up one level
-    return Path(__file__).parent.parent.absolute()
+    if is_executable_mode():
+        # In executable mode, use user's home directory for persistent data
+        return Path.home() / '.osi'
+    else:
+        # Get the directory containing this file, then go up one level
+        return Path(__file__).parent.parent.absolute()
 
 
 def get_environments_dir() -> Path:
     """Get the environments directory."""
-    return get_osi_root() / "environments"
+    if is_executable_mode():
+        # In executable mode, use user's home directory to avoid temp directory issues
+        return Path.home() / '.osi' / 'environments'
+    else:
+        return get_osi_root() / "environments"
 
 
 
@@ -185,3 +193,81 @@ def sanitize_name(name: str) -> str:
         sanitized = "unnamed_tool"
         
     return sanitized
+
+
+def is_executable_mode() -> bool:
+    """Check if OSI is running as a PyInstaller executable."""
+    return getattr(sys, 'frozen', False) or os.environ.get('OSI_EXECUTABLE_MODE') == '1'
+
+
+def get_resource_path(relative_path: str = '') -> Path:
+    """Get absolute path to resource, works for dev and PyInstaller executable."""
+    if is_executable_mode():
+        # Running as PyInstaller executable
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller temp directory
+            base_path = Path(sys._MEIPASS)
+        else:
+            # Fallback to environment variable
+            base_path = Path(os.environ.get('OSI_RESOURCE_PATH', os.path.dirname(os.path.abspath(__file__))))
+    else:
+        # Running in development mode
+        base_path = Path(__file__).parent.parent
+
+    if relative_path:
+        return base_path / relative_path
+    return base_path
+
+
+def get_default_kits_paths() -> List[Path]:
+    """Get default paths to search for kits, handling executable mode."""
+    paths = []
+
+    if is_executable_mode():
+        # In executable mode, check environment variable first
+        env_kits_path = os.environ.get('OSI_KITS_PATH')
+        if env_kits_path:
+            paths.append(Path(env_kits_path))
+
+        # Also check resource path
+        resource_kits = get_resource_path('kits')
+        if resource_kits.exists():
+            paths.append(resource_kits)
+    else:
+        # Development mode - use standard paths
+        project_root = Path(__file__).parent.parent
+        paths.append(project_root / 'kits')
+
+    # Always include user's home directory
+    home_kits = Path.home() / '.osi' / 'kits'
+    if home_kits not in paths:
+        paths.append(home_kits)
+
+    return [p for p in paths if p.exists()]
+
+
+def get_default_wheels_paths() -> List[Path]:
+    """Get default paths to search for wheels, handling executable mode."""
+    paths = []
+
+    if is_executable_mode():
+        # In executable mode, check environment variable first
+        env_wheels_path = os.environ.get('OSI_WHEELS_PATH')
+        if env_wheels_path:
+            paths.append(Path(env_wheels_path))
+
+        # Also check resource path
+        resource_wheels = get_resource_path('wheels')
+        if resource_wheels.exists():
+            paths.append(resource_wheels)
+    else:
+        # Development mode - use standard paths
+        project_root = Path(__file__).parent.parent
+        paths.append(project_root / 'wheels')
+
+    # Always include user's home directory
+    home_wheels = Path.home() / '.osi' / 'wheels'
+    if home_wheels not in paths:
+        paths.append(home_wheels)
+
+    return [p for p in paths if p.exists()]

@@ -22,7 +22,7 @@ try:
 except ImportError:
     pkginfo = None
 
-from .utils import get_osi_root, ensure_directory, sanitize_name
+from .utils import get_osi_root, ensure_directory, sanitize_name, get_default_kits_paths, get_default_wheels_paths
 
 
 @dataclass
@@ -58,8 +58,15 @@ class WheelManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.osi_root = get_osi_root()
+
+        # Use new resource path functions for executable compatibility
+        self.wheels_paths = get_default_wheels_paths()
+        self.kits_paths = get_default_kits_paths()
+
+        # Maintain backward compatibility
         self.wheels_dir = self.osi_root / "wheels"
         self.kits_dir = self.osi_root / "kits"
+
         self._wheel_cache: Dict[str, WheelInfo] = {}
         
         # Ensure directories exist
@@ -77,7 +84,8 @@ class WheelManager:
             List of WheelInfo objects for discovered wheels
         """
         if search_paths is None:
-            search_paths = [self.wheels_dir, self.kits_dir]
+            # Use new resource-aware paths for executable compatibility
+            search_paths = self.wheels_paths + self.kits_paths
         
         wheels = []
         

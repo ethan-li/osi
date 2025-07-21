@@ -466,3 +466,114 @@ dev_packages = [
 ```
 
 These are not installed by default but can be useful for tool development.
+
+## Building Standalone Executables
+
+OSI supports building standalone executables using PyInstaller, allowing users to run OSI without requiring Python to be installed on their system.
+
+### Prerequisites
+
+```bash
+# Install PyInstaller (included in requirements.txt)
+pip install pyinstaller>=5.0.0
+```
+
+### Building Executables
+
+#### Option 1: Using the Build Script
+
+```bash
+# Build for current platform
+python build_scripts/build_pyinstaller.py
+
+# Build with debug information
+python build_scripts/build_pyinstaller.py --debug
+
+# Build without testing
+python build_scripts/build_pyinstaller.py --no-test
+```
+
+#### Option 2: Platform-Specific Scripts
+
+**Windows:**
+```cmd
+build_scripts\build_windows.bat
+```
+
+**macOS/Linux:**
+```bash
+./build_scripts/build_unix.sh
+```
+
+#### Option 3: Using Main Build System
+
+```bash
+# Build all distributions including executable
+python build_distributions.py --all
+
+# Build only executable
+python build_distributions.py --executable
+```
+
+### Build Output
+
+The build process creates:
+
+- **Windows**: `dist/osi.exe` - Standalone executable
+- **macOS**: `dist/OSI.app` - Application bundle (or `dist/osi` binary)
+- **Linux**: `dist/osi` - Standalone binary
+
+### Distribution Packages
+
+The build system automatically creates distribution packages:
+
+- `dist/osi-windows-x86_64.zip` - Windows distribution
+- `dist/osi-darwin-arm64.zip` - macOS distribution
+- `dist/osi-linux-x86_64.zip` - Linux distribution
+
+Each package includes:
+- The standalone executable
+- README with usage instructions
+- All necessary resource files
+
+### Executable Features
+
+The standalone executable includes:
+
+- **Complete OSI functionality**: All commands and features
+- **Embedded resources**: Kits and wheels bundled into executable
+- **No Python required**: Runs on systems without Python installed
+- **Cross-platform**: Native executables for Windows, macOS, and Linux
+- **Self-contained**: All dependencies included
+
+### Testing Executables
+
+```bash
+# Test the built executable
+./dist/osi --help
+./dist/osi doctor
+./dist/osi list
+
+# On Windows
+dist\osi.exe --help
+dist\osi.exe doctor
+```
+
+### Troubleshooting Builds
+
+**Common Issues:**
+
+1. **Missing dependencies**: Ensure all requirements are installed
+2. **Import errors**: Check that all OSI modules are properly included
+3. **Resource not found**: Verify that kits and wheels are bundled correctly
+4. **Large executable size**: Consider using UPX compression
+
+**Debug builds:**
+```bash
+python build_scripts/build_pyinstaller.py --debug
+```
+
+**Manual PyInstaller command:**
+```bash
+pyinstaller build_scripts/osi.spec --clean --noconfirm
+```

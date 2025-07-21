@@ -15,10 +15,10 @@ def build_executable():
     """Build PyInstaller executable."""
     print("\n🔨 Building PyInstaller Executable")
     print("-" * 40)
-    
+
     try:
         result = subprocess.run([
-            sys.executable, "build_scripts/build_executable.py"
+            sys.executable, "build_scripts/build_pyinstaller.py"
         ], check=True)
         return result.returncode == 0
     except subprocess.CalledProcessError:

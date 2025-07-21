@@ -8,3 +8,6 @@ wheel>=0.36.0
 
 # Additional dependencies for wheel-based system
 pkginfo>=1.8.0
+
+# Build dependencies
+pyinstaller>=5.0.0
