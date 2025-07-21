@@ -1,0 +1,10 @@
+# Core dependencies for OSI
+toml>=0.10.2
+packaging>=21.0
+virtualenv>=20.0.0
+pip>=21.0.0
+setuptools>=50.0.0
+wheel>=0.36.0
+
+# Additional dependencies for wheel-based system
+pkginfo>=1.8.0

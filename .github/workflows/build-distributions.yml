@@ -1,0 +1,150 @@
+name: Build Distributions
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-executable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build executable
+      run: |
+        python build_scripts/build_executable.py
+
+    - name: Upload executable artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: osi-executable-${{ matrix.os }}
+        path: dist/
+
+  build-portable:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Build portable distribution
+      run: |
+        python build_scripts/build_portable.py
+
+    - name: Upload portable artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: osi-portable-windows
+        path: osi-portable-*.zip
+
+  build-docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Docker image
+      run: |
+        python build_scripts/build_docker.py
+
+  create-release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-executable, build-portable, build-docker]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          osi-executable-*/*
+          osi-portable-*/*
+          quick_start.py
+          install_osi.py
+        body: |
+          ## OSI Release ${{ github.ref_name }}
+          
+          This release includes multiple distribution methods:
+          
+          ### Quick Start (Recommended)
+          - Download `quick_start.py` and run `python quick_start.py`
+          
+          ### Self-contained Installer
+          - Download `install_osi.py` and run `python install_osi.py`
+          
+          ### Executables
+          - Windows: `osi.exe`
+          - Linux: `osi` (Linux executable)
+          - macOS: `osi` (macOS executable)
+          
+          ### Portable Distribution
+          - Windows: `osi-portable-windows.zip`
+          
+          ### Docker
+          - `docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
+          
+          See the [Deployment Guide](DEPLOYMENT_GUIDE.md) for detailed instructions.
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,5 @@
+This is a test file for the text processor tool.
+It contains multiple lines of text.
+We can use this to test the word counting functionality.
+The tool should be able to count words, lines, and characters.
+This demonstrates the wheel-based OSI system working correctly!
