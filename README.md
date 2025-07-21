@@ -16,6 +16,17 @@ OSI (Organized Software Installer) is designed for users who prefer simplified s
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 - **User-Friendly**: Simple interface for users who want streamlined installation
 - **Standard Configuration**: Uses pyproject.toml for tool configuration
+- **Multiple Distribution Methods**: Standalone executables, quick start, source, portable, Docker
+
+## Distribution Methods
+
+OSI offers multiple ways to install and distribute tools:
+
+1. **Standalone Executables**: Single-file executables with no Python dependency required
+2. **Quick Start Script**: One-command installation directly from GitHub
+3. **Source Installation**: Full development setup with all features and testing
+4. **Portable Distribution**: Self-contained directory for easy deployment
+5. **Docker Containers**: Containerized deployment for consistent environments
 
 ## Requirements
 
@@ -26,6 +37,17 @@ OSI (Organized Software Installer) is designed for users who prefer simplified s
 ## Quick Start
 
 ### Installation
+
+#### Option 1: Standalone Executable (Recommended for End Users)
+
+Download the pre-built executable for your platform:
+- **Windows**: Download `osi-windows-x86_64.zip` from releases
+- **macOS**: Download `osi-darwin-arm64.zip` from releases
+- **Linux**: Download `osi-linux-x86_64.zip` from releases
+
+Extract and run directly - no Python installation required!
+
+#### Option 2: From Source
 
 1. Download or clone this repository
 2. Verify your system meets requirements:

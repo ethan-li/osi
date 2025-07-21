@@ -4,9 +4,54 @@
 
 OSI (Organized Software Installer) now provides multiple "download and run" options that require **no manual dependency installation**. Users can choose the method that best fits their environment.
 
-## 🚀 Quick Start (Recommended)
+## 🚀 Standalone Executables (Recommended for End Users)
 
-### Option 1: One-Click Setup Script
+### Option 1: Download Pre-built Executable
+
+**No Python installation required!** Download the standalone executable for your platform:
+
+#### Windows
+```cmd
+# Download from GitHub releases
+curl -L -o osi-windows.zip https://github.com/ethan-li/osi/releases/latest/download/osi-windows-x86_64.zip
+# Extract and run
+unzip osi-windows.zip
+cd osi-windows-x86_64
+osi.exe --help
+```
+
+#### macOS
+```bash
+# Download from GitHub releases
+curl -L -o osi-macos.zip https://github.com/ethan-li/osi/releases/latest/download/osi-darwin-arm64.zip
+# Extract and run
+unzip osi-macos.zip
+cd osi-darwin-arm64
+./osi --help
+# Or use the .app bundle
+open OSI.app
+```
+
+#### Linux
+```bash
+# Download from GitHub releases
+curl -L -o osi-linux.zip https://github.com/ethan-li/osi/releases/latest/download/osi-linux-x86_64.zip
+# Extract and run
+unzip osi-linux.zip
+cd osi-linux-x86_64
+./osi --help
+```
+
+### Benefits of Standalone Executables
+- ✅ **No Python required**: Works on any system without Python installation
+- ✅ **Single file**: Everything bundled into one executable
+- ✅ **Fast startup**: Optimized for quick execution
+- ✅ **Portable**: Copy and run anywhere
+- ✅ **Complete functionality**: All OSI features included
+
+## 🛠️ Quick Start (Python Required)
+
+### Option 2: One-Click Setup Script
 **Best for: Most users**
 
 1. **Download**: `quick_start.py` (single file, ~15KB)
