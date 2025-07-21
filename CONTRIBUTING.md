@@ -18,7 +18,7 @@ This project follows a simple code of conduct: be respectful, inclusive, and con
 
 1. **Fork and clone the repository**:
    ```bash
-   git clone https://github.com/your-username/osi.git
+   git clone https://github.com/ethan-li/osi.git
    cd osi
    ```
 
@@ -215,7 +215,7 @@ Releases are managed by maintainers and follow semantic versioning:
 
 - **Issues**: Create GitHub issues for bugs and feature requests
 - **Discussions**: Use GitHub Discussions for questions
-- **Email**: Contact the maintainer at aeon.zheng.li@gmail.com
+- **Email**: Contact the maintainer at ethanlizheng@gmail.com
 
 ## Recognition
 

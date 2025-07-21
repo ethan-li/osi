@@ -6,7 +6,7 @@ PyWheel applications with automatic dependency isolation.
 """
 
 __version__ = "1.0.0"
-__author__ = "Zheng Li"
+__author__ = "Ethan Li"
 __description__ = "Python environment management for PyWheel applications"
 
 from .environment_manager import EnvironmentManager

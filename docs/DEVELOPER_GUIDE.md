@@ -35,7 +35,7 @@ name = "my-awesome-tool"
 version = "1.0.0"
 description = "A tool that does awesome things"
 authors = [
-    {name = "Zheng Li", email = "aeon.zheng.li@gmail.com"}
+    {name = "Ethan Li", email = "ethanlizheng@gmail.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"

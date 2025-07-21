@@ -19,9 +19,7 @@ This displays all configured tools with their installation status:
 ```
 Available tools:
 --------------------------------------------------
-✓ data_analyzer      - A data analysis tool for CSV files
-✗ web_scraper        - A simple web scraping tool
-✓ file_organizer     - Organize files in directories by type
+✓ text_processor     - A simple text processing tool for OSI demonstration
 ```
 
 - ✓ = Tool is installed and ready to use
@@ -31,7 +29,7 @@ Available tools:
 
 ```bash
 # Install a specific tool
-osi install data_analyzer
+osi install text_processor
 ```
 
 This will:
@@ -43,13 +41,13 @@ This will:
 
 ```bash
 # Run a tool with arguments
-osi run data_analyzer mydata.csv --output ./results
+osi run text_processor count tests/data/test_text.txt
 
 # Get help for a tool
-osi run data_analyzer --help
+osi run text_processor --help
 
 # Run without arguments (if the tool supports it)
-osi run file_organizer
+osi run text_processor
 ```
 
 OSI automatically:
@@ -62,7 +60,7 @@ OSI automatically:
 
 ```bash
 # Show detailed information about a tool
-osi info data_analyzer
+osi info text_processor
 ```
 
 This displays:
@@ -75,65 +73,66 @@ This displays:
 
 ```bash
 # Remove a tool and its environment
-osi uninstall web_scraper
+osi uninstall text_processor
 ```
 
 This removes the tool's virtual environment and all its dependencies.
 
 ## Example Workflows
 
-### Data Analysis Workflow
+### Text Processing Workflow
 
-1. **Install the data analyzer**
+1. **Install the text processor**
    ```bash
-   osi install data_analyzer
+   osi install text_processor
    ```
 
-2. **Analyze a CSV file**
+2. **Process a text file**
    ```bash
-   osi run data_analyzer sales_data.csv --output ./analysis_results
+   osi run text_processor count tests/data/test_text.txt
    ```
 
 3. **View the results**
-   The tool will generate statistics and plots in the output directory.
+   The tool will display word count and other text statistics.
 
-### Web Scraping Workflow
+### Advanced Text Processing
 
-1. **Install the web scraper**
+1. **Check tool information**
    ```bash
-   osi install web_scraper
+   osi info text_processor
    ```
 
-2. **Scrape links from a website**
+2. **Process multiple files**
    ```bash
-   osi run web_scraper https://example.com --mode links --output links.json
+   osi run text_processor count tests/data/test_text.txt
+   osi run text_processor count tests/data/sample_data.csv
    ```
 
-3. **Extract text content**
+3. **Get help for available commands**
    ```bash
-   osi run web_scraper https://example.com --mode text --output content.txt
+   osi run text_processor --help
    ```
 
-### File Organization Workflow
+### Kit Management Workflow
 
-1. **Install the file organizer**
+1. **List available kits**
    ```bash
-   osi install file_organizer
+   osi list-kits
    ```
 
-2. **Analyze a directory**
+2. **Get kit information**
    ```bash
-   osi run file_organizer analyze ~/Downloads
+   osi kit-info test_kit
    ```
 
-3. **Organize files by type**
+3. **Install a kit from a directory**
    ```bash
-   osi run file_organizer organize-by-type ~/Downloads --create-folders
+   osi install-kit /path/to/kit/directory
    ```
 
-4. **Clean up temporary files**
+4. **Verify kit installation**
    ```bash
-   osi run file_organizer clean ~/Downloads --pattern "*.tmp"
+   osi list
    ```
 
 ## Advanced Usage

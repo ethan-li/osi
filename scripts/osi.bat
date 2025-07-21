@@ -34,15 +34,15 @@ if !errorlevel! equ 0 (
 
 REM Python not found
 echo Error: Python not found in PATH
-echo Please install Python 3.7 or later and ensure it's in your PATH
+echo Please install Python 3.11 or later and ensure it's in your PATH
 echo You can download Python from: https://www.python.org/downloads/
 exit /b 1
 
 :found_python
 REM Verify Python version
-%PYTHON_EXE% -c "import sys; exit(0 if sys.version_info >= (3, 7) else 1)" >nul 2>&1
+%PYTHON_EXE% -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)" >nul 2>&1
 if !errorlevel! neq 0 (
-    echo Error: Python 3.7 or later is required
+    echo Error: Python 3.11 or later is required
     %PYTHON_EXE% --version
     exit /b 1
 )

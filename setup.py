@@ -16,12 +16,12 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="osi",
     version="1.0.0",
-    author="Zheng Li",
-    author_email="aeon.zheng.li@gmail.com",
+    author="Ethan Li",
+    author_email="ethanlizheng@gmail.com",
     description="Python environment management for PyWheel applications",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/zheng-li/osi",
+    url="https://github.com/ethan-li/osi",
     license="MIT",
     packages=find_packages(),
     classifiers=[

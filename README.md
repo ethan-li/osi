@@ -1,6 +1,6 @@
-# OSI - Organized Software Installer
+# OSI: Organized Software Installer
 
-A comprehensive Python environment management solution for distributing Python wheel applications with automatic dependency isolation and one-step installation.
+A modern Python tool management system that simplifies the installation, management, and execution of Python-based tools through wheel packages. OSI provides a unified interface for managing multiple tools with automatic dependency resolution and virtual environment isolation.
 
 ## Overview
 
@@ -28,9 +28,9 @@ OSI (Organized Software Installer) is designed for users who prefer simplified s
 ### Installation
 
 1. Download or clone this repository
-2. Run the installer for your platform:
-   - **Windows**: `scripts\osi.bat install`
-   - **macOS/Linux**: `scripts/osi.sh install`
+2. Verify your system meets requirements:
+   - **Windows**: `scripts\osi.bat doctor`
+   - **macOS/Linux**: `scripts/osi.sh doctor`
 
 ### Running Tools
 
@@ -44,8 +44,11 @@ osi run tool_name
 # Install a new tool
 osi install tool_name
 
+# Show tool information
+osi info tool_name
+
 # Get help
-osi help
+osi --help
 ```
 
 ## Architecture
@@ -81,16 +84,16 @@ osi list-kits
 osi install-kit /path/to/kit/directory
 
 # Install a specific tool (automatically sets up environment and dependencies)
-osi install text-processor
+osi install text_processor
 
 # Run a tool with arguments
-osi run text-processor count myfile.txt
+osi run text_processor count myfile.txt
 
 # Get help for a tool
-osi run text-processor --help
+osi run text_processor --help
 
 # Show kit information
-osi kit-info my_kit
+osi kit-info test_kit
 
 # Check system status
 osi doctor
@@ -130,6 +133,36 @@ Use standard `pyproject.toml` format with console script entry points.
 - Use `osi doctor` to diagnose common issues
 - Run `osi clean` to reset environments if needed
 
+## Project Structure
+
+```
+osi/
+├── osi/                    # Core Python package
+│   ├── __init__.py        # Package initialization
+│   ├── launcher.py        # Main launcher and CLI
+│   ├── config_manager.py  # Configuration management
+│   ├── wheel_manager.py   # Wheel discovery and management
+│   └── ...               # Other core modules
+├── scripts/               # Cross-platform launcher scripts
+├── tests/                 # Comprehensive test suite
+├── docs/                  # Documentation
+├── kits/                  # Kit-based tool collections
+├── build_scripts/         # Distribution builders
+├── quick_start.py         # Quick installation script
+├── install_osi.py         # Self-contained installer
+└── README.md              # This file
+```
+
+## Links
+
+- **GitHub**: [https://github.com/ethan-li/osi](https://github.com/ethan-li/osi)
+- **Documentation**: [docs/](docs/)
+- **Issues**: [https://github.com/ethan-li/osi/issues](https://github.com/ethan-li/osi/issues)
+
+## Author
+
+- **Ethan Li** - *Initial work and maintenance*
+
 ## License
 
-[Add your license information here]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -9,14 +9,21 @@ This guide will help you install and set up OSI (Organized Software Installer) o
 - **Disk Space**: At least 100MB for OSI itself, plus space for tool environments
 - **Internet Connection**: Required for downloading dependencies
 
-## Quick Installation
+## Installation
 
-### Option 1: Download and Run (Recommended for End Users)
+### Using Git (Recommended)
+
+```bash
+git clone https://github.com/ethan-li/osi.git
+cd osi
+```
+
+### From Source
 
 1. **Download OSI**
    ```bash
    # Clone or download the OSI repository
-   git clone https://github.com/your-org/osi.git
+   git clone https://github.com/ethan-li/osi.git
    cd osi
    ```
 
@@ -57,7 +64,7 @@ osi doctor
 
 2. **Download OSI**
    - Download the ZIP file and extract it
-   - Or use Git: `git clone https://github.com/your-org/osi.git`
+   - Or use Git: `git clone https://github.com/ethan-li/osi.git`
 
 3. **Run OSI**
    ```cmd
@@ -77,7 +84,7 @@ osi doctor
 
 2. **Download OSI**
    ```bash
-   git clone https://github.com/your-org/osi.git
+   git clone https://github.com/ethan-li/osi.git
    cd osi
    ```
 
@@ -96,7 +103,7 @@ osi doctor
 
 2. **Download OSI**
    ```bash
-   git clone https://github.com/your-org/osi.git
+   git clone https://github.com/ethan-li/osi.git
    cd osi
    ```
 

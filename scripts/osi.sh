@@ -16,7 +16,7 @@ command_exists() {
 # Function to check Python version
 check_python_version() {
     local python_cmd="$1"
-    if ! $python_cmd -c "import sys; exit(0 if sys.version_info >= (3, 7) else 1)" >/dev/null 2>&1; then
+    if ! $python_cmd -c "import sys; exit(0 if sys.version_info >= (3, 11) else 1)" >/dev/null 2>&1; then
         return 1
     fi
     return 0

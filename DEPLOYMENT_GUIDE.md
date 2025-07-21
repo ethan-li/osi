@@ -15,7 +15,7 @@ OSI (Organized Software Installer) now provides multiple "download and run" opti
 
 ```bash
 # Download and run (example)
-curl -O https://your-server.com/osi/quick_start.py
+curl -O https://github.com/ethan-li/osi/raw/main/quick_start.py
 python quick_start.py
 ```
 
