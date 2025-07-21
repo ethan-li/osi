@@ -11,6 +11,9 @@ For users: Just run "python quick_start.py" and follow the prompts.
 import sys
 import subprocess
 import urllib.request
+import tempfile
+import zipfile
+import shutil
 from pathlib import Path
 
 def print_banner():
@@ -48,19 +51,48 @@ def check_requirements():
     return True
 
 def download_osi():
-    """Download OSI source code."""
-    print("\n📥 Downloading OSI...")
-    
-    # For demo purposes, we'll simulate downloading
-    # In real deployment, this would download from GitHub releases
-    current_dir = Path(__file__).parent
-    
-    if (current_dir / "osi").exists():
-        print("✅ OSI source found locally")
-        return current_dir
-    else:
-        print("❌ OSI source not found")
-        print("Please ensure this script is in the OSI directory")
+    """Download OSI source code from GitHub."""
+    print("\n📥 Downloading OSI from GitHub...")
+
+    import tempfile
+    import zipfile
+    import shutil
+
+    # Create temporary directory
+    temp_dir = Path(tempfile.mkdtemp())
+
+    try:
+        # Download OSI source from GitHub
+        github_url = "https://github.com/ethan-li/osi/archive/refs/heads/main.zip"
+        zip_path = temp_dir / "osi.zip"
+
+        print("Downloading OSI source code...")
+        urllib.request.urlretrieve(github_url, zip_path)
+
+        # Extract the zip file
+        print("Extracting files...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(temp_dir)
+
+        # Find the extracted directory (should be osi-main)
+        extracted_dir = temp_dir / "osi-main"
+        if not extracted_dir.exists():
+            # Try alternative names
+            for item in temp_dir.iterdir():
+                if item.is_dir() and "osi" in item.name.lower():
+                    extracted_dir = item
+                    break
+
+        if extracted_dir.exists():
+            print("✅ OSI source downloaded successfully")
+            return extracted_dir
+        else:
+            print("❌ Failed to find OSI source in downloaded archive")
+            return None
+
+    except Exception as e:
+        print(f"❌ Download failed: {e}")
+        print("Please check your internet connection and try again")
         return None
 
 def setup_osi(source_dir):
