@@ -6,6 +6,9 @@ pip>=21.0.0
 setuptools>=50.0.0
 wheel>=0.36.0
 
+# Type stubs for mypy
+types-toml>=0.10.8
+
 # Additional dependencies for wheel-based system
 pkginfo>=1.8.0
 

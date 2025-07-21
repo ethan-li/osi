@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 black isort mypy bandit safety
+        pip install flake8 black isort mypy types-toml bandit safety
 
     - name: Lint with flake8
       run: |
@@ -37,7 +37,7 @@ jobs:
 
     - name: Type checking with mypy
       run: |
-        mypy osi/ --ignore-missing-imports
+        mypy osi/ --show-error-codes
 
     - name: Security check with bandit
       run: |
