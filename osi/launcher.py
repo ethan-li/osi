@@ -46,7 +46,9 @@ class Launcher:
         for tool_name in tools:
             config = self.config_manager.load_tool_config(tool_name)
             if config:
-                status = "[OK]" if self.env_manager.environment_exists(tool_name) else "[!]"
+                status = (
+                    "[OK]" if self.env_manager.environment_exists(tool_name) else "[!]"
+                )
                 print(f"{status} {tool_name:<20} - {config.description}")
             else:
                 print(f"[!] {tool_name:<20} - (configuration error)")
@@ -405,7 +407,9 @@ class Launcher:
                 config = self.config_manager.load_tool_config(tool_name)
                 if config:
                     status = (
-                        "[OK]" if self.env_manager.environment_exists(tool_name) else "[!]"
+                        "[OK]"
+                        if self.env_manager.environment_exists(tool_name)
+                        else "[!]"
                     )
                     print(f"{status} {tool_name:<20} - {config.description}")
                 else:
