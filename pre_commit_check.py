@@ -20,9 +20,10 @@ import argparse
 import subprocess
 import sys
 import time
-import yaml
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
+
+import yaml
 
 
 class Colors:
