@@ -31,8 +31,8 @@ if command_exists python3 && check_python_version python3; then
 elif command_exists python && check_python_version python; then
     PYTHON_EXE="python"
 else
-    echo "Error: Python 3.7 or later not found"
-    echo "Please install Python 3.7 or later and ensure it's in your PATH"
+    echo "Error: Python 3.11 or later not found"
+    echo "Please install Python 3.11 or later and ensure it's in your PATH"
     echo ""
     echo "Installation instructions:"
     echo "  macOS: brew install python3  (or download from python.org)"

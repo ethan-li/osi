@@ -37,7 +37,7 @@ This project follows a simple code of conduct: be respectful, inclusive, and con
 
 4. **Run tests to ensure everything works**:
    ```bash
-   python test_wheel_only_system.py
+   python -m unittest discover tests/ -v
    python scripts/osi.py doctor
    ```
 
@@ -99,6 +99,27 @@ python -m coverage report
 # Test OSI functionality manually
 python scripts/osi.py list
 python scripts/osi.py doctor
+```
+
+### Building Distributions
+
+OSI supports multiple distribution methods including standalone executables:
+
+```bash
+# Build all distributions
+python build_distributions.py --all
+
+# Build specific distributions
+python build_distributions.py --executable  # PyInstaller standalone executable
+python build_distributions.py --portable    # Portable directory
+python build_distributions.py --docker      # Docker container
+
+# Build PyInstaller executable directly
+python build_scripts/build_pyinstaller.py
+
+# Platform-specific builds
+./build_scripts/build_unix.sh      # macOS/Linux
+build_scripts\build_windows.bat    # Windows
 ```
 
 ## Contributing Process
@@ -215,7 +236,7 @@ Releases are managed by maintainers and follow semantic versioning:
 
 - **Issues**: Create GitHub issues for bugs and feature requests
 - **Discussions**: Use GitHub Discussions for questions
-- **Email**: Contact the maintainer at ethanlizheng@gmail.com
+- **Email**: Contact the maintainer at aeon.zheng.li@gmail.com
 
 ## Recognition
 

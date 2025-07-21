@@ -17,7 +17,7 @@ setup(
     name="osi",
     version="1.0.0",
     author="Ethan Li",
-    author_email="ethanlizheng@gmail.com",
+    author_email="aeon.zheng.li@gmail.com",
     description="Python environment management for PyWheel applications",
     long_description=long_description,
     long_description_content_type="text/markdown",

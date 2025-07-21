@@ -35,7 +35,7 @@ name = "my-awesome-tool"
 version = "1.0.0"
 description = "A tool that does awesome things"
 authors = [
-    {name = "Ethan Li", email = "ethanlizheng@gmail.com"}
+    {name = "Ethan Li", email = "aeon.zheng.li@gmail.com"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -63,10 +63,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zheng-li/my-awesome-tool"
-Repository = "https://github.com/zheng-li/my-awesome-tool"
+Homepage = "https://github.com/ethan-li/my-awesome-tool"
+Repository = "https://github.com/ethan-li/my-awesome-tool"
 Documentation = "https://my-awesome-tool.readthedocs.io"
-"Bug Tracker" = "https://github.com/zheng-li/my-awesome-tool/issues"
+"Bug Tracker" = "https://github.com/ethan-li/my-awesome-tool/issues"
 
 [project.scripts]
 my-tool = "my_tool.main:cli"
