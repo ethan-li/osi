@@ -28,7 +28,9 @@ class DependencyResolver:
         self.env_manager = EnvironmentManager()
         self.logger = logging.getLogger(__name__)
 
-    def parse_requirement(self, requirement: str) -> Optional[Tuple[str, Optional[str]]]:
+    def parse_requirement(
+        self, requirement: str
+    ) -> Optional[Tuple[str, Optional[str]]]:
         """
         Parse a requirement string into package name and version specifier.
 
@@ -236,7 +238,9 @@ class DependencyResolver:
 
                     if len(set(version_specs)) > 1:
                         # Different version specifications - potential conflict
-                        conflicts[package_name] = [req["requirement"] for req in req_list]
+                        conflicts[package_name] = [
+                            req["requirement"] for req in req_list
+                        ]
 
             return conflicts
 
@@ -289,7 +293,9 @@ class DependencyResolver:
             self.logger.error(f"Failed to ensure dependencies for {tool_name}: {e}")
             return False
 
-    def get_dependency_info(self, tool_name: str) -> Dict[str, Union[List[str], Dict[str, str], bool]]:
+    def get_dependency_info(
+        self, tool_name: str
+    ) -> Dict[str, Union[List[str], Dict[str, str], bool]]:
         """
         Get detailed dependency information for a tool.
 

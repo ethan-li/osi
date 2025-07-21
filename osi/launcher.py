@@ -268,7 +268,11 @@ class Launcher:
 
             if required_deps and isinstance(required_deps, list):
                 for dep in required_deps:
-                    status = "✓" if isinstance(missing_deps, list) and dep not in missing_deps else "✗"
+                    status = (
+                        "✓"
+                        if isinstance(missing_deps, list) and dep not in missing_deps
+                        else "✗"
+                    )
                     print(f"  {status} {dep}")
             else:
                 print("  None")

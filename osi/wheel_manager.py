@@ -181,7 +181,9 @@ class WheelManager:
             self.logger.error(f"Failed to extract wheel info from {wheel_path}: {e}")
             return None
 
-    def _create_wheel_info_from_pkginfo(self, wheel_path: Path, metadata: Any) -> WheelInfo:
+    def _create_wheel_info_from_pkginfo(
+        self, wheel_path: Path, metadata: Any
+    ) -> WheelInfo:
         """Create WheelInfo from pkginfo metadata."""
         # Extract entry points
         entry_points = {}
