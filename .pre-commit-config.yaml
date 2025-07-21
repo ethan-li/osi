@@ -1,0 +1,92 @@
+# OSI Pre-Commit Configuration
+# 
+# This configuration file defines the code quality validation settings
+# for the OSI project pre-commit hooks.
+#
+# Usage:
+#   pip install pre-commit
+#   pre-commit install
+#   pre-commit run --all-files
+#
+# Author: OSI Development Team
+# License: MIT
+
+repos:
+  # Local hooks using our custom validation tool
+  - repo: local
+    hooks:
+      - id: osi-code-quality
+        name: OSI Code Quality Validation
+        entry: python pre_commit_check.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+        
+      - id: osi-code-quality-fast
+        name: OSI Code Quality Validation (Fast)
+        entry: python pre_commit_check.py --fast
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+  # Standard pre-commit hooks for additional validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(.*\.md|.*\.txt)$
+      - id: end-of-file-fixer
+        exclude: ^(.*\.md|.*\.txt)$
+      - id: check-yaml
+        files: \.(yaml|yml)$
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Python-specific hooks
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black]
+
+  # Type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        files: ^osi/
+        additional_dependencies: [types-toml]
+        args: [--show-error-codes]
+
+# Configuration for different stages
+default_stages: [commit]
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    \.conda/.*|
+    \.git/.*|
+    __pycache__/.*|
+    .*\.pyc|
+    environments/.*|
+    dist/.*|
+    build/.*|
+    \.pytest_cache/.*
+  )$
+
+# Minimum pre-commit version
+minimum_pre_commit_version: '3.0.0'

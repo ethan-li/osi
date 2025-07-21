@@ -53,25 +53,75 @@ This project follows a simple code of conduct: be respectful, inclusive, and con
 
 ### Code Quality
 
-Before submitting changes, ensure your code passes all quality checks:
+We maintain high code quality standards using automated tools and comprehensive validation.
+
+#### Pre-Commit Code Quality Validation (Recommended)
+
+Use our comprehensive pre-commit validation tool that automates all quality checks:
+
+```bash
+# Run all quality checks (recommended before committing)
+python pre_commit_check.py
+
+# Run with auto-fix for formatting issues
+python pre_commit_check.py --fix
+
+# Run in fast mode (skips tests and functional verification)
+python pre_commit_check.py --fast
+```
+
+#### Install Pre-Commit Hook
+
+Set up automatic validation before each commit:
+
+```bash
+# Install the pre-commit hook (full validation)
+python setup_pre_commit_hook.py
+
+# Install in fast mode (for faster commits during development)
+python setup_pre_commit_hook.py --fast
+
+# Remove the hook if needed
+python setup_pre_commit_hook.py --remove
+```
+
+#### Manual Quality Checks
+
+You can also run individual quality checks manually:
 
 ```bash
 # Format code
-black .
+python -m black .
 
 # Sort imports
-isort .
+python -m isort .
 
-# Lint code
-flake8 .
+# Type checking (zero errors required)
+python -m mypy osi/ --show-error-codes
 
-# Type checking
-mypy osi/ --ignore-missing-imports
+# Run complete test suite
+python tests/run_tests.py --category all
+
+# Functional verification
+python scripts/osi.py doctor
 
 # Security checks
 bandit -r osi/
 safety check
 ```
+
+#### Quality Standards Enforced
+
+The pre-commit validation tool enforces these professional standards:
+
+1. **Type Safety**: Zero mypy errors across all source files
+2. **Code Formatting**: Consistent Black formatting (88-char line length)
+3. **Import Organization**: Proper import sorting with isort
+4. **Syntax Validation**: All Python files must compile without errors
+5. **Test Coverage**: All 65+ tests must pass successfully
+6. **Functional Verification**: OSI system diagnostics must pass
+7. **Security Compliance**: Valid YAML syntax in workflow files
+8. **Cross-Platform**: Unicode encoding and compatibility checks
 
 ### Testing
 
