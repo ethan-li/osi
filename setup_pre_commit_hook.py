@@ -131,11 +131,12 @@ def check_dependencies() -> bool:
     # Check mypy
     try:
         import subprocess
+
         result = subprocess.run(
             ["python", "-m", "mypy", "--version"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
         if result.returncode != 0:
             missing_tools.append("mypy")
@@ -148,7 +149,7 @@ def check_dependencies() -> bool:
             ["python", "-m", "black", "--version"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
         if result.returncode != 0:
             missing_tools.append("black")
@@ -161,7 +162,7 @@ def check_dependencies() -> bool:
             ["python", "-m", "isort", "--version"],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
         if result.returncode != 0:
             missing_tools.append("isort")
