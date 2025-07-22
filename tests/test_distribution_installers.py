@@ -209,19 +209,24 @@ class TestQuickStartScript(unittest.TestCase):
             )
 
             # Help should work and return 0
-            self.assertEqual(result.returncode, 0,
-                           f"Help command failed with return code {result.returncode}. "
-                           f"stdout: {result.stdout[:200]}... "
-                           f"stderr: {result.stderr[:200]}...")
+            self.assertEqual(
+                result.returncode,
+                0,
+                f"Help command failed with return code {result.returncode}. "
+                f"stdout: {result.stdout[:200]}... "
+                f"stderr: {result.stderr[:200]}...",
+            )
 
             # Check for help-related content
             output_lower = result.stdout.lower()
             help_indicators = ["usage", "help", "options", "arguments", "description"]
             found_help = any(indicator in output_lower for indicator in help_indicators)
 
-            self.assertTrue(found_help,
-                          f"Help output should contain help information. "
-                          f"Got: {result.stdout[:300]}...")
+            self.assertTrue(
+                found_help,
+                f"Help output should contain help information. "
+                f"Got: {result.stdout[:300]}...",
+            )
 
         except subprocess.TimeoutExpired:
             self.skipTest("Quick start help took too long")

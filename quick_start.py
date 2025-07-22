@@ -248,18 +248,18 @@ This script will:
 6. Show usage instructions
 
 No manual configuration required - just run and follow the prompts!
-        """
+        """,
     )
 
     parser.add_argument(
-        "--quiet", "-q",
+        "--quiet",
+        "-q",
         action="store_true",
-        help="Run in quiet mode with minimal output"
+        help="Run in quiet mode with minimal output",
     )
 
     parser.add_argument(
-        "--install-dir",
-        help="Custom installation directory (default: ~/.osi)"
+        "--install-dir", help="Custom installation directory (default: ~/.osi)"
     )
 
     args = parser.parse_args()
