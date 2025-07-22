@@ -256,16 +256,22 @@ class TestPortableBuild(unittest.TestCase):
 
     @patch("zipfile.ZipFile")
     @patch("urllib.request.urlretrieve")
-    @patch("subprocess.run")
-    def test_portable_build_function(self, mock_run, mock_urlretrieve, mock_zipfile):
+    @patch("platform.system")
+    @patch("platform.machine")
+    def test_portable_build_function(
+        self, mock_machine, mock_system, mock_urlretrieve, mock_zipfile
+    ):
         """Test portable build function with mocked dependencies."""
         sys.path.insert(0, str(self.project_root / "build_scripts"))
         try:
             from build_portable import download_portable_python
 
+            # Mock platform detection to simulate Windows environment
+            mock_system.return_value = "Windows"
+            mock_machine.return_value = "AMD64"
+
             # Mock successful download and extraction
             mock_urlretrieve.return_value = None
-            mock_run.return_value.returncode = 0
 
             # Mock zipfile operations
             mock_zip_instance = MagicMock()
@@ -276,31 +282,71 @@ class TestPortableBuild(unittest.TestCase):
             with patch("pathlib.Path.unlink") as mock_unlink:
                 mock_unlink.return_value = None
 
-                # This should work on Windows, return None on other platforms
+                # Test Windows platform (should return a Path)
                 result = download_portable_python()
+                self.assertIsInstance(result, Path)
 
-                # Result should be None (unsupported) or a Path (Windows)
-                self.assertTrue(result is None or isinstance(result, Path))
+                # Test non-Windows platform
+                mock_system.return_value = "Linux"
+                result = download_portable_python()
+                self.assertIsNone(result)
 
         except ImportError:
             self.skipTest("Portable build script not importable")
 
-    def test_portable_platform_support(self):
+    @patch("platform.system")
+    def test_portable_platform_support(self, mock_system):
         """Test that portable build correctly identifies platform support."""
-        import platform
-
         sys.path.insert(0, str(self.project_root / "build_scripts"))
         try:
             from build_portable import download_portable_python
 
-            result = download_portable_python()
+            # Test Windows platform support
+            mock_system.return_value = "Windows"
+            with patch("platform.machine", return_value="AMD64"):
+                with patch("urllib.request.urlretrieve"):
+                    with patch("zipfile.ZipFile"):
+                        with patch("pathlib.Path.unlink"):
+                            result = download_portable_python()
+                            # On Windows, should return a Path
+                            self.assertIsInstance(result, Path)
 
-            if platform.system().lower() == "windows":
-                # On Windows, should return a path or None
-                self.assertTrue(result is None or isinstance(result, Path))
-            else:
-                # On non-Windows, should return None
-                self.assertIsNone(result)
+            # Test non-Windows platform (should return None)
+            mock_system.return_value = "Linux"
+            result = download_portable_python()
+            self.assertIsNone(result)
+
+        except ImportError:
+            self.skipTest("Portable build script not importable")
+
+    @patch("platform.system")
+    @patch("platform.machine")
+    def test_portable_build_architecture_detection(self, mock_machine, mock_system):
+        """Test portable build architecture detection on Windows."""
+        sys.path.insert(0, str(self.project_root / "build_scripts"))
+        try:
+            from build_portable import download_portable_python
+
+            # Test Windows with different architectures
+            mock_system.return_value = "Windows"
+
+            # Test 64-bit architecture
+            mock_machine.return_value = "AMD64"
+            with patch("urllib.request.urlretrieve"):
+                with patch("zipfile.ZipFile"):
+                    with patch("pathlib.Path.unlink"):
+                        result = download_portable_python()
+                        self.assertIsInstance(result, Path)
+                        # Should use amd64 version
+
+            # Test 32-bit architecture
+            mock_machine.return_value = "x86"
+            with patch("urllib.request.urlretrieve"):
+                with patch("zipfile.ZipFile"):
+                    with patch("pathlib.Path.unlink"):
+                        result = download_portable_python()
+                        self.assertIsInstance(result, Path)
+                        # Should use win32 version
 
         except ImportError:
             self.skipTest("Portable build script not importable")

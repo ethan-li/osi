@@ -18,10 +18,10 @@ from pathlib import Path
 # Import Unicode utilities for cross-platform compatibility
 try:
     from build_scripts.unicode_utils import (
-        print_success,
         print_error,
-        print_warning,
         print_info,
+        print_success,
+        print_warning,
         safe_print,
     )
 except ImportError:
