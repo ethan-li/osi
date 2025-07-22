@@ -11,11 +11,24 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import Unicode utilities for cross-platform compatibility
+sys.path.insert(0, str(Path(__file__).parent / "build_scripts"))
+from unicode_utils import (
+    print_success,
+    print_error,
+    print_warning,
+    print_build,
+    print_package,
+    print_docker,
+    print_info,
+    safe_print,
+)
+
 
 def build_executable():
     """Build PyInstaller executable."""
-    print("\n🔨 Building PyInstaller Executable")
-    print("-" * 40)
+    print_build("Building PyInstaller Executable")
+    safe_print("-" * 40)
 
     try:
         result = subprocess.run(
@@ -23,14 +36,14 @@ def build_executable():
         )
         return result.returncode == 0
     except subprocess.CalledProcessError:
-        print("❌ Executable build failed")
+        print_error("Executable build failed")
         return False
 
 
 def build_portable():
     """Build portable Python distribution."""
-    print("\n📦 Building Portable Distribution")
-    print("-" * 40)
+    print_package("Building Portable Distribution")
+    safe_print("-" * 40)
 
     try:
         result = subprocess.run(
@@ -38,14 +51,14 @@ def build_portable():
         )
         return result.returncode == 0
     except subprocess.CalledProcessError:
-        print("❌ Portable build failed")
+        print_error("Portable build failed")
         return False
 
 
 def build_docker():
     """Build Docker distribution."""
-    print("\n🐳 Building Docker Distribution")
-    print("-" * 40)
+    print_docker("Building Docker Distribution")
+    safe_print("-" * 40)
 
     try:
         result = subprocess.run(
@@ -53,17 +66,17 @@ def build_docker():
         )
         return result.returncode == 0
     except subprocess.CalledProcessError:
-        print("❌ Docker build failed")
+        print_error("Docker build failed")
         return False
 
 
 def test_installer():
     """Test the self-contained installer."""
-    print("\n🧪 Testing Self-contained Installer")
-    print("-" * 40)
+    safe_print("\n[TEST] Testing Self-contained Installer")
+    safe_print("-" * 40)
 
-    print("✅ Self-contained installer ready: install_osi.py")
-    print("   Users can run: python install_osi.py")
+    print_success("Self-contained installer ready: install_osi.py")
+    safe_print("   Users can run: python install_osi.py")
     return True
 
 
@@ -148,7 +161,7 @@ For detailed instructions, see the README file included with each distribution m
     with open("DISTRIBUTION_GUIDE.md", "w") as f:
         f.write(summary)
 
-    print("✅ Distribution guide created: DISTRIBUTION_GUIDE.md")
+    print_success("Distribution guide created: DISTRIBUTION_GUIDE.md")
 
 
 def main():
@@ -197,9 +210,9 @@ def main():
     create_distribution_summary()
 
     # Print results
-    print("\n" + "=" * 50)
-    print("📊 Build Results Summary")
-    print("-" * 50)
+    safe_print("\n" + "=" * 50)
+    safe_print("[SUMMARY] Build Results Summary")
+    safe_print("-" * 50)
 
     success_count = 0
     total_count = 0
@@ -208,25 +221,25 @@ def main():
         total_count += 1
         if success:
             success_count += 1
-            print(f"✅ {method.capitalize()}: SUCCESS")
+            print_success(f"{method.capitalize()}: SUCCESS")
         else:
-            print(f"❌ {method.capitalize()}: FAILED")
+            print_error(f"{method.capitalize()}: FAILED")
 
-    print(
-        f"\n📈 Overall: {success_count}/{total_count} distributions built successfully"
+    safe_print(
+        f"\n[STATS] Overall: {success_count}/{total_count} distributions built successfully"
     )
 
     if success_count == total_count:
-        print("\n🎉 All distributions built successfully!")
-        print("\n📋 Next steps:")
-        print("1. Test each distribution method")
-        print("2. Upload to distribution channels")
-        print("3. Update documentation")
-        print("4. Notify users of new release")
+        safe_print("\n[SUCCESS] All distributions built successfully!")
+        print_info("Next steps:")
+        safe_print("1. Test each distribution method")
+        safe_print("2. Upload to distribution channels")
+        safe_print("3. Update documentation")
+        safe_print("4. Notify users of new release")
         return 0
     else:
-        print(f"\n⚠️  {total_count - success_count} distributions failed")
-        print("Check the output above for error details")
+        print_warning(f"{total_count - success_count} distributions failed")
+        safe_print("Check the output above for error details")
         return 1
 
 

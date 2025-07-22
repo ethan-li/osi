@@ -15,6 +15,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import Unicode utilities for cross-platform compatibility
+from unicode_utils import (
+    print_build,
+    print_error,
+    print_package,
+    print_search,
+    print_success,
+    print_warning,
+    safe_print,
+)
+
 
 class OSIPyInstallerBuilder:
     """Builder class for creating OSI executables with PyInstaller"""
@@ -29,32 +40,32 @@ class OSIPyInstallerBuilder:
 
     def check_dependencies(self):
         """Check if PyInstaller and other build dependencies are available"""
-        print("🔍 Checking build dependencies...")
+        print_search("Checking build dependencies...")
 
         try:
             import PyInstaller
 
-            print(f"✅ PyInstaller {PyInstaller.__version__} found")
+            print_success(f"PyInstaller {PyInstaller.__version__} found")
         except ImportError:
-            print("❌ PyInstaller not found. Installing...")
+            print_error("PyInstaller not found. Installing...")
             subprocess.run(
                 [sys.executable, "-m", "pip", "install", "pyinstaller>=5.0.0"],
                 check=True,
             )
-            print("✅ PyInstaller installed")
+            print_success("PyInstaller installed")
 
         # Check for UPX (optional, for compression)
         try:
             subprocess.run(["upx", "--version"], capture_output=True, check=True)
-            print("✅ UPX found (will be used for compression)")
+            print_success("UPX found (will be used for compression)")
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
-            print("⚠️  UPX not found (optional, executable will be larger)")
+            print_warning("UPX not found (optional, executable will be larger)")
             return False
 
     def clean_build_directory(self):
         """Clean previous build artifacts"""
-        print("🧹 Cleaning build directory...")
+        safe_print("[CLEAN] Cleaning build directory...")
 
         # Remove dist directory
         if self.build_dir.exists():
@@ -65,29 +76,29 @@ class OSIPyInstallerBuilder:
         if build_temp.exists():
             shutil.rmtree(build_temp)
 
-        print("✅ Build directory cleaned")
+        print_success("Build directory cleaned")
 
     def prepare_resources(self):
         """Prepare resource files for bundling"""
-        print("📦 Preparing resources...")
+        print_package("Preparing resources...")
 
         # Ensure kits directory exists with at least test kit
         kits_dir = self.project_root / "kits"
         if not kits_dir.exists():
             kits_dir.mkdir()
-            print("📁 Created kits directory")
+            safe_print("[FOLDER] Created kits directory")
 
         # Ensure wheels directory exists
         wheels_dir = self.project_root / "wheels"
         if not wheels_dir.exists():
             wheels_dir.mkdir()
-            print("📁 Created wheels directory")
+            safe_print("[FOLDER] Created wheels directory")
 
-        print("✅ Resources prepared")
+        print_success("Resources prepared")
 
     def build_executable(self, debug=False, onefile=True):
         """Build the executable using PyInstaller"""
-        print(f"🔨 Building OSI executable for {self.platform}...")
+        print_build(f"Building OSI executable for {self.platform}...")
 
         # Prepare PyInstaller command
         cmd = [
@@ -106,7 +117,7 @@ class OSIPyInstallerBuilder:
         # Don't add --console here when using a spec file
 
         # Run PyInstaller
-        print(f"Running: {' '.join(cmd)}")
+        safe_print(f"Running: {' '.join(cmd)}")
         result = subprocess.run(cmd, cwd=self.project_root)
 
         if result.returncode != 0:
@@ -114,7 +125,7 @@ class OSIPyInstallerBuilder:
                 f"PyInstaller build failed with code {result.returncode}"
             )
 
-        print("✅ Executable built successfully")
+        print_success("Executable built successfully")
 
     def get_executable_path(self):
         """Get the path to the built executable"""
@@ -148,21 +159,21 @@ class OSIPyInstallerBuilder:
                 test_cmd, capture_output=True, text=True, timeout=30
             )
             if result.returncode == 0:
-                print("✅ Executable test passed")
+                print_success("Executable test passed")
                 return True
             else:
-                print(f"❌ Executable test failed: {result.stderr}")
+                print_error(f"Executable test failed: {result.stderr}")
                 return False
         except subprocess.TimeoutExpired:
-            print("❌ Executable test timed out")
+            print_error("Executable test timed out")
             return False
         except Exception as e:
-            print(f"❌ Executable test error: {e}")
+            print_error(f"Executable test error: {e}")
             return False
 
     def create_distribution_package(self):
         """Create a distribution package with the executable"""
-        print("📦 Creating distribution package...")
+        print_package("Creating distribution package...")
 
         exe_path = self.get_executable_path()
         if not exe_path.exists():
@@ -215,12 +226,12 @@ For more information, visit: https://github.com/ethan-li/osi
         archive_path = self.build_dir / f"{dist_name}.zip"
         shutil.make_archive(str(archive_path.with_suffix("")), "zip", str(dist_dir))
 
-        print(f"✅ Distribution package created: {archive_path}")
+        print_success(f"Distribution package created: {archive_path}")
         return archive_path
 
     def build(self, debug=False, test=True, package=True):
         """Complete build process"""
-        print(f"🚀 Starting OSI PyInstaller build for {self.platform}")
+        safe_print(f"[LAUNCH] Starting OSI PyInstaller build for {self.platform}")
 
         try:
             # Check dependencies
@@ -238,22 +249,22 @@ For more information, visit: https://github.com/ethan-li/osi
             # Test executable
             if test:
                 if not self.test_executable():
-                    print("⚠️  Executable test failed, but build completed")
+                    print_warning("Executable test failed, but build completed")
 
             # Create distribution package
             if package:
                 archive_path = self.create_distribution_package()
-                print(f"🎉 Build completed successfully!")
-                print(f"📦 Distribution package: {archive_path}")
+                safe_print("[SUCCESS] Build completed successfully!")
+                print_package(f"Distribution package: {archive_path}")
             else:
                 exe_path = self.get_executable_path()
-                print(f"🎉 Build completed successfully!")
-                print(f"🔧 Executable: {exe_path}")
+                safe_print("[SUCCESS] Build completed successfully!")
+                safe_print(f"[TOOL] Executable: {exe_path}")
 
             return True
 
         except Exception as e:
-            print(f"❌ Build failed: {e}")
+            print_error(f"Build failed: {e}")
             return False
 
 

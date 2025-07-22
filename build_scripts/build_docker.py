@@ -10,10 +10,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Import Unicode utilities for cross-platform compatibility
+from unicode_utils import (
+    print_docker,
+    print_error,
+    print_info,
+    print_package,
+    print_success,
+    safe_print,
+)
+
 
 def build_docker_image():
     """Build the OSI Docker image."""
-    print("Building OSI Docker image...")
+    print_docker("Building OSI Docker image...")
 
     try:
         # Build the image
@@ -24,14 +34,14 @@ def build_docker_image():
             text=True,
         )
 
-        print("✅ Docker image built successfully")
+        print_success("Docker image built successfully")
         return True
 
     except subprocess.CalledProcessError as e:
-        print(f"❌ Docker build failed: {e.stderr}")
+        print_error(f"Docker build failed: {e.stderr}")
         return False
     except FileNotFoundError:
-        print("❌ Docker not found. Please install Docker first.")
+        print_error("Docker not found. Please install Docker first.")
         return False
 
 
@@ -50,12 +60,12 @@ def test_docker_image():
             result = subprocess.run(
                 cmd, check=True, capture_output=True, text=True, timeout=30
             )
-            print(f"✅ {description} works")
+            print_success(f"{description} works")
         except subprocess.CalledProcessError as e:
-            print(f"❌ {description} failed: {e.stderr}")
+            print_error(f"{description} failed: {e.stderr}")
             return False
         except subprocess.TimeoutExpired:
-            print(f"❌ {description} timed out")
+            print_error(f"{description} timed out")
             return False
 
     return True
@@ -223,11 +233,11 @@ docker build -t osi:latest .
 
 ## Advantages
 
-- ✅ No local Python installation required
-- ✅ All dependencies included in container
-- ✅ Consistent environment across different machines
-- ✅ Easy to update (just pull new image)
-- ✅ Isolated from host system
+- [OK] No local Python installation required
+- [OK] All dependencies included in container
+- [OK] Consistent environment across different machines
+- [OK] Easy to update (just pull new image)
+- [OK] Isolated from host system
 
 ## File Access
 
@@ -276,7 +286,7 @@ def main():
 
         # Step 2: Test Docker image
         if not test_docker_image():
-            print("❌ Docker image failed testing")
+            print_error("Docker image failed testing")
             return 1
 
         # Step 3: Create wrapper scripts
@@ -288,23 +298,23 @@ def main():
         # Step 5: Create documentation
         create_docker_readme()
 
-        print("\n🎉 Success! Docker-based OSI distribution created.")
-        print("\n📋 Usage options:")
-        print(
+        safe_print("\n[SUCCESS] Success! Docker-based OSI distribution created.")
+        print_info("Usage options:")
+        safe_print(
             '1. Direct Docker: docker run --rm -v "$(pwd):/workspace" osi:latest list'
         )
-        print("2. Wrapper scripts: ./docker_wrappers/osi.sh list")
-        print("3. Docker Compose: docker-compose run --rm osi list")
-        print("\n📁 Files created:")
-        print("- Dockerfile (Docker image definition)")
-        print("- docker-compose.yml (Docker Compose configuration)")
-        print("- docker_wrappers/ (Convenience scripts)")
-        print("- DOCKER_README.md (Usage documentation)")
+        safe_print("2. Wrapper scripts: ./docker_wrappers/osi.sh list")
+        safe_print("3. Docker Compose: docker-compose run --rm osi list")
+        safe_print("\n[FOLDER] Files created:")
+        safe_print("- Dockerfile (Docker image definition)")
+        safe_print("- docker-compose.yml (Docker Compose configuration)")
+        safe_print("- docker_wrappers/ (Convenience scripts)")
+        safe_print("- DOCKER_README.md (Usage documentation)")
 
         return 0
 
     except Exception as e:
-        print(f"\n❌ Build failed: {e}")
+        print_error(f"Build failed: {e}")
         return 1
 
 

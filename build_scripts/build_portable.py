@@ -14,10 +14,20 @@ import sys
 import zipfile
 from pathlib import Path
 
+# Import Unicode utilities for cross-platform compatibility
+from unicode_utils import (
+    print_error,
+    print_info,
+    print_package,
+    print_success,
+    print_warning,
+    safe_print,
+)
+
 
 def download_portable_python():
     """Download portable Python for the current platform."""
-    print("Setting up portable Python environment...")
+    safe_print("Setting up portable Python environment...")
 
     system = platform.system().lower()
     arch = platform.machine().lower()
@@ -35,8 +45,8 @@ def download_portable_python():
             )
             python_dir = "python-3.11.7-embed-win32"
     else:
-        print("❌ Portable Python distribution currently only supports Windows")
-        print("For Linux/macOS, consider using the PyInstaller method or Docker")
+        print_error("Portable Python distribution currently only supports Windows")
+        safe_print("For Linux/macOS, consider using the PyInstaller method or Docker")
         return None
 
     portable_dir = Path("portable_osi")
@@ -254,9 +264,9 @@ def test_portable_distribution(portable_dir):
             [str(launcher), "--help"], capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
-            print("✅ Portable distribution help command works")
+            print_success("Portable distribution help command works")
         else:
-            print(f"❌ Help command failed: {result.stderr}")
+            print_error(f"Help command failed: {result.stderr}")
             return False
 
         # Test list command
@@ -264,18 +274,18 @@ def test_portable_distribution(portable_dir):
             [str(launcher), "list"], capture_output=True, text=True, timeout=30
         )
         if result.returncode == 0:
-            print("✅ Portable distribution list command works")
+            print_success("Portable distribution list command works")
         else:
-            print(f"❌ List command failed: {result.stderr}")
+            print_error(f"List command failed: {result.stderr}")
             return False
 
         return True
 
     except subprocess.TimeoutExpired:
-        print("❌ Portable distribution test timed out")
+        print_error("Portable distribution test timed out")
         return False
     except Exception as e:
-        print(f"❌ Portable distribution test failed: {e}")
+        print_error(f"Portable distribution test failed: {e}")
         return False
 
 
@@ -295,7 +305,7 @@ def create_distribution_package(portable_dir):
                 zipf.write(file_path, arc_path)
 
     size_mb = Path(zip_name).stat().st_size / (1024 * 1024)
-    print(f"✅ Distribution package created: {zip_name} ({size_mb:.1f} MB)")
+    print_success(f"Distribution package created: {zip_name} ({size_mb:.1f} MB)")
     return zip_name
 
 
@@ -321,26 +331,26 @@ def main():
 
         # Step 5: Test distribution
         if test_portable_distribution(portable_dir):
-            print("✅ Portable distribution tested successfully")
+            print_success("Portable distribution tested successfully")
         else:
-            print("❌ Portable distribution failed testing")
+            print_error("Portable distribution failed testing")
             return 1
 
         # Step 6: Create distribution package
         zip_name = create_distribution_package(portable_dir)
 
-        print("\n🎉 Success! Portable OSI distribution created.")
-        print(f"📁 Distribution package: {Path(zip_name).absolute()}")
-        print(f"📁 Portable directory: {portable_dir.absolute()}")
-        print("\n📋 Distribution instructions:")
-        print("1. Extract the zip file on target machines")
-        print("2. Run osi.bat (Windows) or ./osi.sh (Linux/macOS)")
-        print("3. No Python installation required")
+        safe_print("\n[SUCCESS] Success! Portable OSI distribution created.")
+        safe_print(f"[FOLDER] Distribution package: {Path(zip_name).absolute()}")
+        safe_print(f"[FOLDER] Portable directory: {portable_dir.absolute()}")
+        print_info("Distribution instructions:")
+        safe_print("1. Extract the zip file on target machines")
+        safe_print("2. Run osi.bat (Windows) or ./osi.sh (Linux/macOS)")
+        safe_print("3. No Python installation required")
 
         return 0
 
     except Exception as e:
-        print(f"\n❌ Build failed: {e}")
+        print_error(f"Build failed: {e}")
         return 1
 
 
