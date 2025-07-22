@@ -280,14 +280,23 @@ def main():
     parser.add_argument(
         "--no-package", action="store_true", help="Skip creating distribution package"
     )
+    parser.add_argument(
+        "--package", action="store_true", help="Force creating distribution package"
+    )
     parser.add_argument("--project-root", help="Project root directory")
 
     args = parser.parse_args()
 
+    # Determine package flag: --package forces True, --no-package forces False, default True
+    if args.package:
+        package = True
+    elif args.no_package:
+        package = False
+    else:
+        package = True  # Default to creating package
+
     builder = OSIPyInstallerBuilder(args.project_root)
-    success = builder.build(
-        debug=args.debug, test=not args.no_test, package=not args.no_package
-    )
+    success = builder.build(debug=args.debug, test=not args.no_test, package=package)
 
     return 0 if success else 1
 

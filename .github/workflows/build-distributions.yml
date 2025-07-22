@@ -10,8 +10,37 @@ jobs:
   build-executable:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          # Windows builds
+          - os: windows-latest
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-windows-x64
+            executable-name: osi.exe
+          - os: windows-latest
+            arch: x86
+            python-arch: x86
+            artifact-name: osi-windows-x86
+            executable-name: osi.exe
+          # macOS builds
+          - os: macos-13  # Intel
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-macos-intel
+            executable-name: osi
+          - os: macos-14  # Apple Silicon
+            arch: arm64
+            python-arch: arm64
+            artifact-name: osi-macos-apple-silicon
+            executable-name: osi
+          # Linux builds
+          - os: ubuntu-latest
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-linux-x64
+            executable-name: osi
 
     steps:
     - uses: actions/checkout@v4
@@ -20,22 +49,97 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+        architecture: ${{ matrix.python-arch }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pyinstaller
+        pip install pyinstaller>=6.0.0
+
+    - name: Install UPX (compression utility)
+      if: matrix.os != 'macos-14'  # UPX not available for Apple Silicon
+      shell: bash
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+          sudo apt-get update && sudo apt-get install -y upx-ucl
+        elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          choco install upx
+        elif [[ "${{ matrix.os }}" == "macos-13" ]]; then
+          brew install upx
+        fi
 
     - name: Build executable
       run: |
-        python build_scripts/build_pyinstaller.py
+        python build_scripts/build_pyinstaller.py --package
+
+    - name: Sign Windows executable
+      if: matrix.os == 'windows-latest' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      shell: powershell
+      run: |
+        # Note: This requires WINDOWS_CERTIFICATE_BASE64 and WINDOWS_CERTIFICATE_PASSWORD secrets
+        # For now, we'll skip signing but leave the structure for future implementation
+        Write-Host "Code signing would be performed here with proper certificates"
+        Write-Host "Executable: dist/osi.exe"
+
+    - name: Sign macOS executable
+      if: (matrix.os == 'macos-13' || matrix.os == 'macos-14') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: |
+        # Note: This requires MACOS_CERTIFICATE_BASE64 and MACOS_CERTIFICATE_PASSWORD secrets
+        # For now, we'll skip signing but leave the structure for future implementation
+        echo "Code signing would be performed here with proper certificates"
+        echo "Executable: dist/osi"
+
+    - name: Test executable
+      shell: bash
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          ./dist/osi.exe --help
+          ./dist/osi.exe --version
+        else
+          ./dist/osi --help
+          ./dist/osi --version
+        fi
+
+    - name: Create distribution package
+      shell: bash
+      run: |
+        mkdir -p release
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          # Windows: Create zip with executable and README
+          cp dist/osi.exe release/
+          cp README.md release/
+          cp LICENSE release/ 2>/dev/null || echo "LICENSE file not found"
+          cd release
+          7z a "../${{ matrix.artifact-name }}.zip" *
+          cd ..
+        else
+          # Unix: Create tar.gz with executable and README
+          cp dist/osi release/
+          cp README.md release/
+          cp LICENSE release/ 2>/dev/null || echo "LICENSE file not found"
+          chmod +x release/osi
+          cd release
+          tar -czf "../${{ matrix.artifact-name }}.tar.gz" *
+          cd ..
+        fi
+
+    - name: Generate checksums
+      shell: bash
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          certutil -hashfile "${{ matrix.artifact-name }}.zip" SHA256 > "${{ matrix.artifact-name }}.zip.sha256"
+        else
+          shasum -a 256 "${{ matrix.artifact-name }}.tar.gz" > "${{ matrix.artifact-name }}.tar.gz.sha256"
+        fi
 
     - name: Upload executable artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: osi-executable-${{ matrix.os }}
-        path: dist/
+        name: ${{ matrix.artifact-name }}
+        path: |
+          ${{ matrix.artifact-name }}.*
+        retention-days: 30
 
   build-portable:
     runs-on: windows-latest
@@ -115,38 +219,71 @@ jobs:
       with:
         merge-multiple: true
 
+    - name: List downloaded artifacts
+      run: |
+        echo "Downloaded artifacts:"
+        find . -name "osi-*" -type f | sort
+
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          osi-executable-*/*
-          osi-portable-*/*
+          osi-windows-x64.*
+          osi-windows-x86.*
+          osi-macos-intel.*
+          osi-macos-apple-silicon.*
+          osi-linux-x64.*
+          osi-portable-*.zip
           quick_start.py
           install_osi.py
         body: |
           ## OSI Release ${{ github.ref_name }}
-          
-          This release includes multiple distribution methods:
-          
-          ### Quick Start (Recommended)
+
+          This release includes multiple distribution methods for maximum compatibility:
+
+          ### 🚀 Quick Start (Recommended for Python users)
           - Download `quick_start.py` and run `python quick_start.py`
-          
-          ### Self-contained Installer
+          - Automatically sets up OSI with all dependencies
+
+          ### 📦 Self-contained Installer (Recommended for most users)
           - Download `install_osi.py` and run `python install_osi.py`
-          
-          ### Executables
-          - Windows: `osi.exe`
-          - Linux: `osi` (Linux executable)
-          - macOS: `osi` (macOS executable)
-          
-          ### Portable Distribution
-          - Windows: `osi-portable-windows.zip`
-          
-          ### Docker
-          - `docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
-          
-          See the [Deployment Guide](DEPLOYMENT_GUIDE.md) for detailed instructions.
+          - Creates isolated environment with launcher scripts
+
+          ### 💻 Standalone Executables (No Python required)
+
+          **Windows:**
+          - `osi-windows-x64.zip` - Windows 64-bit (Intel/AMD)
+          - `osi-windows-x86.zip` - Windows 32-bit (legacy systems)
+
+          **macOS:**
+          - `osi-macos-intel.tar.gz` - macOS Intel processors
+          - `osi-macos-apple-silicon.tar.gz` - macOS Apple Silicon (M1/M2/M3)
+
+          **Linux:**
+          - `osi-linux-x64.tar.gz` - Linux 64-bit (Intel/AMD)
+
+          ### 📁 Portable Distribution
+          - `osi-portable-windows.zip` - Windows portable with embedded Python
+
+          ### 🐳 Docker Container
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          docker run --rm -v "$(pwd):/workspace" ghcr.io/${{ github.repository }}:${{ github.ref_name }} list
+          ```
+
+          ### 🔐 Security & Verification
+          - All executables include SHA256 checksums (`.sha256` files)
+          - Built with PyInstaller 6.0+ on GitHub Actions runners
+          - Source code and build process are fully transparent
+
+          ### 📖 Documentation
+          - See [README.md](README.md) for usage instructions
+          - Check [DISTRIBUTION_GUIDE.md](DISTRIBUTION_GUIDE.md) for detailed deployment options
+
+          ### 🆘 Support
+          - Report issues: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+          - Documentation: [Project Wiki](https://github.com/${{ github.repository }}/wiki)
         draft: false
-        prerelease: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
