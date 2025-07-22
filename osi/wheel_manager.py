@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 try:
     import pkginfo
 except ImportError:
-    pkginfo = None  # type: ignore
+    pkginfo = None
 
 from .utils import (
     ensure_directory,

@@ -80,8 +80,26 @@ class TestPyInstallerBuild(unittest.TestCase):
             print(f"Debug: spec_file path = {spec_file}")
             print(f"Debug: spec_file exists = {spec_file.exists()}")
 
+            # Check if this is a git repository issue
+            import subprocess
+
+            try:
+                result = subprocess.run(
+                    ["git", "ls-files", "build_scripts/osi.spec"],
+                    capture_output=True,
+                    text=True,
+                    cwd=self.project_root,
+                )
+                print(f"Debug: git ls-files result = '{result.stdout.strip()}'")
+                print(f"Debug: git ls-files returncode = {result.returncode}")
+            except Exception as e:
+                print(f"Debug: git check failed = {e}")
+
         self.assertTrue(
-            spec_file.exists(), f"osi.spec file should exist at {spec_file}"
+            spec_file.exists(),
+            f"osi.spec file should exist at {spec_file}. "
+            f"This file is required for PyInstaller builds. "
+            f"If you see this error in CI, the file may not be tracked by git.",
         )
         self.assertTrue(
             spec_file.is_file(), f"osi.spec should be a file at {spec_file}"
