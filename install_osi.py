@@ -15,6 +15,32 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+# Import Unicode utilities for cross-platform compatibility
+try:
+    from build_scripts.unicode_utils import (
+        print_success,
+        print_error,
+        print_warning,
+        print_info,
+        safe_print,
+    )
+except ImportError:
+    # Fallback if unicode_utils is not available
+    def print_success(msg, **kwargs):
+        print(f"[OK] {msg}", **kwargs)
+
+    def print_error(msg, **kwargs):
+        print(f"[ERROR] {msg}", **kwargs)
+
+    def print_warning(msg, **kwargs):
+        print(f"[WARNING] {msg}", **kwargs)
+
+    def print_info(msg, **kwargs):
+        print(f"[INFO] {msg}", **kwargs)
+
+    def safe_print(msg, **kwargs):
+        print(msg, **kwargs)
+
 
 class OSIInstaller:
     def __init__(self):
@@ -28,11 +54,11 @@ class OSIInstaller:
         print("Checking Python installation...")
 
         if sys.version_info < (3, 11):
-            print("❌ Python 3.11 or higher is required")
-            print(f"Current version: {sys.version}")
+            print_error("Python 3.11 or higher is required")
+            safe_print(f"Current version: {sys.version}")
             return False
 
-        print(f"✅ Python {sys.version.split()[0]} found")
+        print_success(f"Python {sys.version.split()[0]} found")
         return True
 
     def create_virtual_environment(self):
@@ -53,11 +79,11 @@ class OSIInstaller:
                 [sys.executable, "-m", "venv", str(self.venv_dir)], check=True
             )
 
-            print("✅ Virtual environment created")
+            print_success("Virtual environment created")
             return True
 
         except subprocess.CalledProcessError as e:
-            print(f"❌ Failed to create virtual environment: {e}")
+            print_error(f"Failed to create virtual environment: {e}")
             return False
 
     def get_venv_python(self):
@@ -100,7 +126,7 @@ class OSIInstaller:
             print(f"Installing {dep}...")
             subprocess.run([str(python_exe), "-m", "pip", "install", dep], check=True)
 
-        print("✅ Dependencies installed")
+        print_success("Dependencies installed")
         return True
 
     def download_osi_source(self):
@@ -120,11 +146,11 @@ class OSIInstaller:
                 if src.exists():
                     shutil.copy(src, self.osi_dir)
         else:
-            print("❌ OSI source code not found in current directory")
-            print("Please run this installer from the OSI source directory")
+            print_error("OSI source code not found in current directory")
+            safe_print("Please run this installer from the OSI source directory")
             return False
 
-        print("✅ OSI source code set up")
+        print_success("OSI source code set up")
         return True
 
     def create_launcher_scripts(self):
@@ -164,7 +190,7 @@ class OSIInstaller:
                 f.write(shell_content)
             launcher.chmod(0o755)
 
-        print("✅ Launcher scripts created")
+        print_success("Launcher scripts created")
         return launcher
 
     def test_installation(self):
@@ -184,28 +210,28 @@ class OSIInstaller:
             )
 
             if result.returncode == 0:
-                print("✅ OSI installation test passed")
+                print_success("OSI installation test passed")
                 return True
             else:
-                print(f"❌ OSI test failed: {result.stderr}")
+                print_error(f"OSI test failed: {result.stderr}")
                 return False
 
         except subprocess.TimeoutExpired:
-            print("❌ OSI test timed out")
+            print_error("OSI test timed out")
             return False
         except Exception as e:
-            print(f"❌ OSI test failed: {e}")
+            print_error(f"OSI test failed: {e}")
             return False
 
     def add_to_path(self, launcher):
         """Provide instructions for adding OSI to PATH."""
         bin_dir = launcher.parent
 
-        print("\n📋 Installation Complete!")
-        print(f"OSI installed to: {self.install_dir}")
-        print(f"Launcher script: {launcher}")
+        print_info("Installation Complete!")
+        safe_print(f"OSI installed to: {self.install_dir}")
+        safe_print(f"Launcher script: {launcher}")
 
-        print("\n🔧 To use OSI from anywhere, add it to your PATH:")
+        safe_print("\n[TOOL] To use OSI from anywhere, add it to your PATH:")
 
         if self.system == "windows":
             print(f"Add this directory to your PATH: {bin_dir}")
@@ -259,10 +285,10 @@ class OSIInstaller:
             return 0
 
         except KeyboardInterrupt:
-            print("\n❌ Installation cancelled by user")
+            print_error("Installation cancelled by user")
             return 1
         except Exception as e:
-            print(f"\n❌ Installation failed: {e}")
+            print_error(f"Installation failed: {e}")
             return 1
 
 

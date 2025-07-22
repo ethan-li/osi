@@ -14,13 +14,13 @@ from pathlib import Path
 # Import Unicode utilities for cross-platform compatibility
 sys.path.insert(0, str(Path(__file__).parent / "build_scripts"))
 from unicode_utils import (
-    print_success,
-    print_error,
-    print_warning,
     print_build,
-    print_package,
     print_docker,
+    print_error,
     print_info,
+    print_package,
+    print_success,
+    print_warning,
     safe_print,
 )
 
@@ -91,44 +91,44 @@ OSI provides multiple distribution methods to accommodate different user needs a
 **Requirements**: Python 3.11+ only
 **Usage**: `python install_osi.py`
 
-- ✅ Automatically creates isolated environment
-- ✅ Installs all dependencies automatically
-- ✅ Works on Windows, macOS, Linux
-- ✅ Smallest download size (~50KB)
-- ✅ Easy to update
+- [OK] Automatically creates isolated environment
+- [OK] Installs all dependencies automatically
+- [OK] Works on Windows, macOS, Linux
+- [OK] Smallest download size (~50KB)
+- [OK] Easy to update
 
 ## 2. PyInstaller Executable
 **File**: `dist/osi` or `dist/osi.exe`
 **Requirements**: None
 **Usage**: Direct execution
 
-- ✅ No Python installation required
-- ✅ Single file distribution
-- ✅ Fast startup
-- ❌ Larger file size (~50-100MB)
-- ❌ Platform-specific builds needed
+- [OK] No Python installation required
+- [OK] Single file distribution
+- [OK] Fast startup
+- [ERROR] Larger file size (~50-100MB)
+- [ERROR] Platform-specific builds needed
 
 ## 3. Portable Python Distribution
 **File**: `osi-portable-*.zip`
 **Requirements**: None
 **Usage**: Extract and run launcher scripts
 
-- ✅ No Python installation required
-- ✅ Includes full Python environment
-- ✅ Easy to distribute
-- ❌ Large file size (~100-200MB)
-- ❌ Currently Windows-only
+- [OK] No Python installation required
+- [OK] Includes full Python environment
+- [OK] Easy to distribute
+- [ERROR] Large file size (~100-200MB)
+- [ERROR] Currently Windows-only
 
 ## 4. Docker Container
 **Image**: `osi:latest`
 **Requirements**: Docker
 **Usage**: `docker run --rm -v "$(pwd):/workspace" osi:latest`
 
-- ✅ Consistent environment everywhere
-- ✅ Easy to update
-- ✅ Isolated from host system
-- ❌ Requires Docker installation
-- ❌ Larger resource usage
+- [OK] Consistent environment everywhere
+- [OK] Easy to update
+- [OK] Isolated from host system
+- [ERROR] Requires Docker installation
+- [ERROR] Larger resource usage
 
 ## Recommendations by Use Case
 
@@ -158,7 +158,7 @@ OSI provides multiple distribution methods to accommodate different user needs a
 For detailed instructions, see the README file included with each distribution method.
 """
 
-    with open("DISTRIBUTION_GUIDE.md", "w") as f:
+    with open("DISTRIBUTION_GUIDE.md", "w", encoding="utf-8") as f:
         f.write(summary)
 
     print_success("Distribution guide created: DISTRIBUTION_GUIDE.md")

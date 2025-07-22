@@ -254,23 +254,33 @@ class TestPortableBuild(unittest.TestCase):
             except SyntaxError as e:
                 self.fail(f"Syntax error in build_portable.py: {e}")
 
+    @patch("zipfile.ZipFile")
     @patch("urllib.request.urlretrieve")
     @patch("subprocess.run")
-    def test_portable_build_function(self, mock_run, mock_urlretrieve):
+    def test_portable_build_function(self, mock_run, mock_urlretrieve, mock_zipfile):
         """Test portable build function with mocked dependencies."""
         sys.path.insert(0, str(self.project_root / "build_scripts"))
         try:
             from build_portable import download_portable_python
 
-            # Mock successful download
+            # Mock successful download and extraction
             mock_urlretrieve.return_value = None
             mock_run.return_value.returncode = 0
 
-            # This should work on Windows, return None on other platforms
-            result = download_portable_python()
+            # Mock zipfile operations
+            mock_zip_instance = MagicMock()
+            mock_zipfile.return_value.__enter__.return_value = mock_zip_instance
+            mock_zip_instance.extractall.return_value = None
 
-            # Result should be None (unsupported) or a Path (Windows)
-            self.assertTrue(result is None or isinstance(result, Path))
+            # Mock Path.unlink() to avoid FileNotFoundError
+            with patch("pathlib.Path.unlink") as mock_unlink:
+                mock_unlink.return_value = None
+
+                # This should work on Windows, return None on other platforms
+                result = download_portable_python()
+
+                # Result should be None (unsupported) or a Path (Windows)
+                self.assertTrue(result is None or isinstance(result, Path))
 
         except ImportError:
             self.skipTest("Portable build script not importable")
