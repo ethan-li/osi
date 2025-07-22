@@ -69,7 +69,31 @@ jobs:
           brew install upx
         fi
 
+    - name: Debug repository structure
+      shell: bash
+      run: |
+        echo "=== Repository Structure Debug ==="
+        echo "Current working directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo ""
+        echo "Python files in root:"
+        find . -maxdepth 1 -name "*.py" -type f
+        echo ""
+        echo "Contents of build_scripts:"
+        ls -la build_scripts/
+        echo ""
+        echo "Checking for osi_main.py:"
+        if [ -f "osi_main.py" ]; then
+          echo "✅ osi_main.py found in root"
+          ls -la osi_main.py
+        else
+          echo "❌ osi_main.py NOT found in root"
+        fi
+
     - name: Build executable
+      env:
+        OSI_PROJECT_ROOT: ${{ github.workspace }}
       run: |
         python build_scripts/build_pyinstaller.py --package
 

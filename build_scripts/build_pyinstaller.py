@@ -31,12 +31,70 @@ class OSIPyInstallerBuilder:
     """Builder class for creating OSI executables with PyInstaller"""
 
     def __init__(self, project_root=None):
-        self.project_root = (
-            Path(project_root) if project_root else Path(__file__).parent.parent
-        )
+        # Try to find the project root in multiple ways
+        if project_root:
+            self.project_root = Path(project_root)
+        elif os.environ.get("OSI_PROJECT_ROOT"):
+            # Allow override via environment variable (useful for CI)
+            self.project_root = Path(os.environ["OSI_PROJECT_ROOT"])
+            safe_print(
+                f"[INFO] Using project root from OSI_PROJECT_ROOT: {self.project_root}"
+            )
+        else:
+            # Default: parent of the directory containing this script
+            self.project_root = Path(__file__).parent.parent
+
+        # Verify project root by checking for key files
+        self._verify_project_root()
+
         self.build_dir = self.project_root / "dist"
         self.spec_file = self.project_root / "build_scripts" / "osi.spec"
         self.platform = platform.system().lower()
+
+    def _verify_project_root(self):
+        """Verify and potentially correct the project root by checking for key files."""
+        # Check if key files exist in the project root
+        key_files = ["osi_main.py", "setup.py", "requirements.txt"]
+
+        # Debug info
+        safe_print(f"[DEBUG] Initial project_root: {self.project_root}")
+        for file in key_files:
+            file_path = self.project_root / file
+            exists = file_path.exists()
+            safe_print(f"[DEBUG] {file} exists: {exists}")
+
+        # If key files are missing, try to find the correct project root
+        if not all((self.project_root / file).exists() for file in key_files):
+            safe_print(
+                "[WARNING] Project root may be incorrect, searching for correct location..."
+            )
+
+            # Try common locations
+            potential_roots = [
+                Path.cwd(),  # Current working directory
+                Path.cwd().parent,  # Parent of current working directory
+                Path(
+                    __file__
+                ).parent.parent,  # Parent of the directory containing this script
+                Path(
+                    __file__
+                ).parent.parent.parent,  # Grandparent of the directory containing this script
+            ]
+
+            for potential_root in potential_roots:
+                safe_print(f"[DEBUG] Checking potential root: {potential_root}")
+                if all((potential_root / file).exists() for file in key_files):
+                    safe_print(
+                        f"[SUCCESS] Found correct project root: {potential_root}"
+                    )
+                    self.project_root = potential_root
+                    return
+
+            # If we get here, we couldn't find a valid project root
+            safe_print(
+                "[ERROR] Could not find valid project root with all required files"
+            )
+            safe_print("[DEBUG] Will continue with best guess, but build may fail")
 
     def check_dependencies(self):
         """Check if PyInstaller and other build dependencies are available"""
@@ -100,6 +158,25 @@ class OSIPyInstallerBuilder:
         """Build the executable using PyInstaller"""
         print_build(f"Building OSI executable for {self.platform}...")
 
+        # Debug information for CI troubleshooting
+        safe_print(f"[DEBUG] Project root: {self.project_root}")
+        safe_print(f"[DEBUG] Spec file: {self.spec_file}")
+        safe_print(f"[DEBUG] Spec file exists: {self.spec_file.exists()}")
+        safe_print(f"[DEBUG] Current working directory: {os.getcwd()}")
+
+        # Check for main entry point
+        main_script = self.project_root / "osi_main.py"
+        safe_print(f"[DEBUG] Main script: {main_script}")
+        safe_print(f"[DEBUG] Main script exists: {main_script.exists()}")
+
+        if not main_script.exists():
+            print_error(f"Main script not found: {main_script}")
+            # List files in project root for debugging
+            safe_print("[DEBUG] Files in project root:")
+            for file in self.project_root.glob("*.py"):
+                safe_print(f"[DEBUG]   {file}")
+            raise RuntimeError(f"Main script not found: {main_script}")
+
         # Prepare PyInstaller command
         cmd = [
             sys.executable,
@@ -118,9 +195,17 @@ class OSIPyInstallerBuilder:
 
         # Run PyInstaller
         safe_print(f"Running: {' '.join(cmd)}")
-        result = subprocess.run(cmd, cwd=self.project_root)
+        safe_print(f"Working directory: {self.project_root}")
+
+        result = subprocess.run(
+            cmd, cwd=self.project_root, capture_output=True, text=True
+        )
 
         if result.returncode != 0:
+            print_error("PyInstaller build failed!")
+            safe_print(f"Return code: {result.returncode}")
+            safe_print(f"STDOUT:\n{result.stdout}")
+            safe_print(f"STDERR:\n{result.stderr}")
             raise RuntimeError(
                 f"PyInstaller build failed with code {result.returncode}"
             )

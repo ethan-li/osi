@@ -11,9 +11,61 @@ import sys
 from pathlib import Path
 
 # Get the project root directory
-# In PyInstaller spec files, we need to use SPECPATH
-project_root = Path(SPECPATH).parent
+# Try multiple methods to find the correct project root
+project_root = None
+osi_main_path = None
+
+# Method 1: Use environment variable if set (CI environment)
+if os.environ.get('OSI_PROJECT_ROOT'):
+    project_root = Path(os.environ['OSI_PROJECT_ROOT'])
+    print(f"[INFO] Using project root from OSI_PROJECT_ROOT: {project_root}")
+else:
+    # Method 2: Use SPECPATH (default PyInstaller behavior)
+    project_root = Path(SPECPATH).parent
+    print(f"[INFO] Using project root from SPECPATH: {project_root}")
+
 osi_main_path = project_root / 'osi_main.py'
+
+# Debug path resolution for CI troubleshooting
+print(f"[DEBUG] SPECPATH: {SPECPATH}")
+print(f"[DEBUG] project_root: {project_root}")
+print(f"[DEBUG] osi_main_path: {osi_main_path}")
+print(f"[DEBUG] osi_main.py exists: {osi_main_path.exists()}")
+print(f"[DEBUG] Current working directory: {os.getcwd()}")
+
+# List Python files in project root for debugging
+try:
+    py_files = list(project_root.glob('*.py'))
+    print(f"[DEBUG] Python files in project_root: {[f.name for f in py_files]}")
+except Exception as e:
+    print(f"[DEBUG] Error listing files in project_root: {e}")
+
+# Verify the main script exists
+if not osi_main_path.exists():
+    # Try alternative paths
+    alternative_paths = [
+        Path(os.getcwd()) / 'osi_main.py',  # Current working directory
+        Path(SPECPATH).parent / 'osi_main.py',  # Original SPECPATH calculation
+    ]
+
+    print(f"[ERROR] Main script not found at: {osi_main_path}")
+    print(f"[DEBUG] Trying alternative paths:")
+
+    for alt_path in alternative_paths:
+        print(f"[DEBUG]   Checking: {alt_path} -> exists: {alt_path.exists()}")
+        if alt_path.exists():
+            osi_main_path = alt_path
+            project_root = alt_path.parent
+            print(f"[SUCCESS] Found main script at: {osi_main_path}")
+            break
+    else:
+        # Last resort: list all files to help debug
+        print(f"[DEBUG] Files in current directory: {list(Path(os.getcwd()).glob('*'))}")
+        print(f"[DEBUG] Files in SPECPATH parent: {list(Path(SPECPATH).parent.glob('*'))}")
+        raise FileNotFoundError(f"Could not find osi_main.py in any of the expected locations: {alternative_paths}")
+
+print(f"[FINAL] Using osi_main_path: {osi_main_path}")
+print(f"[FINAL] Using project_root: {project_root}")
 
 # Define data files to include
 datas = []
