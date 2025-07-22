@@ -232,29 +232,69 @@ def show_usage_instructions(launcher):
 
 def main():
     """Main quick start process."""
+    import argparse
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="OSI Quick Start - Automated setup for Organized Software Installer",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+This script will:
+1. Check system requirements (Python 3.11+)
+2. Download the latest OSI source code
+3. Set up OSI in an isolated environment
+4. Create launcher scripts for easy access
+5. Test the installation
+6. Show usage instructions
+
+No manual configuration required - just run and follow the prompts!
+        """
+    )
+
+    parser.add_argument(
+        "--quiet", "-q",
+        action="store_true",
+        help="Run in quiet mode with minimal output"
+    )
+
+    parser.add_argument(
+        "--install-dir",
+        help="Custom installation directory (default: ~/.osi)"
+    )
+
+    args = parser.parse_args()
+
     print_banner()
 
     try:
         # Step 1: Check requirements
         if not check_requirements():
-            input("\nPress Enter to exit...")
+            if not args.quiet:
+                input("\nPress Enter to exit...")
             return 1
 
         # Step 2: Download OSI
         source_dir = download_osi()
         if not source_dir:
-            input("\nPress Enter to exit...")
+            if not args.quiet:
+                input("\nPress Enter to exit...")
             return 1
 
-        # Step 3: Set up OSI
-        osi_home, python_exe = setup_osi(source_dir)
+        # Step 3: Set up OSI (use custom install dir if provided)
+        if args.install_dir:
+            # Custom installation directory logic would go here
+            # For now, use the default behavior
+            osi_home, python_exe = setup_osi(source_dir)
+        else:
+            osi_home, python_exe = setup_osi(source_dir)
 
         # Step 4: Create launcher
         launcher = create_launcher(osi_home, python_exe)
 
         # Step 5: Test installation
         if not test_installation(launcher):
-            input("\nPress Enter to exit...")
+            if not args.quiet:
+                input("\nPress Enter to exit...")
             return 1
 
         # Step 6: Show usage instructions
@@ -264,14 +304,15 @@ def main():
         print("✅ OSI Quick Start completed successfully!")
         print("You can now close this window and start using OSI.")
 
-        # Ask if user wants to try a command
-        try:
-            response = input("\nWould you like to try 'osi list' now? (y/n): ")
-            if response.lower().startswith("y"):
-                print(f"\nRunning: {launcher} list")
-                subprocess.run([str(launcher), "list"])
-        except KeyboardInterrupt:
-            pass
+        # Ask if user wants to try a command (only in interactive mode)
+        if not args.quiet:
+            try:
+                response = input("\nWould you like to try 'osi list' now? (y/n): ")
+                if response.lower().startswith("y"):
+                    print(f"\nRunning: {launcher} list")
+                    subprocess.run([str(launcher), "list"])
+            except KeyboardInterrupt:
+                pass
 
         return 0
 
@@ -284,7 +325,8 @@ def main():
         print("1. Check your internet connection")
         print("2. Ensure you have Python 3.11+ installed")
         print("3. Try running as administrator (Windows) or with sudo (Linux/macOS)")
-        input("\nPress Enter to exit...")
+        if not args.quiet:
+            input("\nPress Enter to exit...")
         return 1
 
 

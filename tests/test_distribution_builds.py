@@ -67,7 +67,21 @@ class TestPyInstallerBuild(unittest.TestCase):
     def test_spec_file_exists(self):
         """Test that PyInstaller spec file exists."""
         spec_file = self.project_root / "build_scripts" / "osi.spec"
-        self.assertTrue(spec_file.exists(), "osi.spec file should exist")
+
+        # Debug information for CI troubleshooting
+        if not spec_file.exists():
+            build_scripts_dir = self.project_root / "build_scripts"
+            print(f"Debug: project_root = {self.project_root}")
+            print(f"Debug: build_scripts_dir exists = {build_scripts_dir.exists()}")
+            if build_scripts_dir.exists():
+                print(f"Debug: build_scripts contents = {list(build_scripts_dir.iterdir())}")
+            print(f"Debug: spec_file path = {spec_file}")
+            print(f"Debug: spec_file exists = {spec_file.exists()}")
+
+        self.assertTrue(spec_file.exists(),
+                       f"osi.spec file should exist at {spec_file}")
+        self.assertTrue(spec_file.is_file(),
+                       f"osi.spec should be a file at {spec_file}")
 
     def test_spec_file_content(self):
         """Test that spec file has required content."""
