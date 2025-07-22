@@ -48,7 +48,11 @@ def run_specific_tests(test_modules: List[str], verbosity: int = 2) -> bool:
 
 def run_integration_tests_only(verbosity: int = 2) -> bool:
     """Run only integration tests."""
-    return run_specific_tests(["test_integration"], verbosity)
+    integration_test_modules = [
+        "test_integration",
+        "test_distribution_workflows",
+    ]
+    return run_specific_tests(integration_test_modules, verbosity)
 
 
 def run_unit_tests_only(verbosity: int = 2) -> bool:
@@ -58,8 +62,21 @@ def run_unit_tests_only(verbosity: int = 2) -> bool:
         "test_wheel_manager",
         "test_launcher",
         "test_distribution",
+        "test_distribution_builds",
+        "test_distribution_installers",
     ]
     return run_specific_tests(unit_test_modules, verbosity)
+
+
+def run_distribution_tests_only(verbosity: int = 2) -> bool:
+    """Run only distribution-related tests."""
+    distribution_test_modules = [
+        "test_distribution",
+        "test_distribution_builds",
+        "test_distribution_installers",
+        "test_distribution_workflows",
+    ]
+    return run_specific_tests(distribution_test_modules, verbosity)
 
 
 def main() -> int:
@@ -67,7 +84,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="OSI Test Runner")
     parser.add_argument(
         "--category",
-        choices=["all", "unit", "integration"],
+        choices=["all", "unit", "integration", "distribution"],
         default="all",
         help="Test category to run (default: all)",
     )
@@ -110,6 +127,9 @@ def main() -> int:
     elif args.category == "integration":
         print("Running integration tests only...")
         success = run_integration_tests_only(args.verbosity)
+    elif args.category == "distribution":
+        print("Running distribution tests only...")
+        success = run_distribution_tests_only(args.verbosity)
     else:  # all
         print("Running all tests...")
         success = run_all_tests(args.verbosity)
