@@ -161,7 +161,6 @@ tmp/
 # Build artifacts
 portable_osi/
 osi-portable-*.zip
-osi_main.py
 bandit-results.json
 safety-results.json
 semgrep-results.json
