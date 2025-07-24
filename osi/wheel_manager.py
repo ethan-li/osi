@@ -17,10 +17,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+# Optional dependency handling
+pkginfo: Any = None
 try:
     import pkginfo
 except ImportError:
-    pkginfo = None  # type: ignore[assignment]
+    pass
 
 from .utils import (
     ensure_directory,
