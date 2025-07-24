@@ -18,11 +18,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Optional dependency handling
-pkginfo: Any = None
 try:
     import pkginfo
 except ImportError:
-    pass
+    pkginfo = None
 
 from .utils import (
     ensure_directory,
