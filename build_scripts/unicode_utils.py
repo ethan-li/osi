@@ -98,8 +98,8 @@ class SafeUnicode:
             True if Unicode is safe to use, False otherwise
         """
         try:
-            # Test if we can encode a common Unicode character
-            test_char = "✅"
+            # Test if we can encode a common Unicode character using Unicode escape
+            test_char = "\u2705"  # ✅ checkmark character
             test_char.encode(sys.stdout.encoding or "utf-8")
             return True
         except (UnicodeEncodeError, LookupError):
@@ -140,42 +140,66 @@ class StatusMessages:
     @staticmethod
     def success(message: str) -> str:
         """Format a success message."""
-        return f"✅ {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\u2705 {message}"  # ✅
+        else:
+            return f"[OK] {message}"
 
     @staticmethod
     def error(message: str) -> str:
         """Format an error message."""
-        return f"❌ {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\u274c {message}"  # ❌
+        else:
+            return f"[ERROR] {message}"
 
     @staticmethod
     def warning(message: str) -> str:
         """Format a warning message."""
-        return f"⚠️  {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\u26a0\ufe0f  {message}"  # ⚠️
+        else:
+            return f"[WARNING]  {message}"
 
     @staticmethod
     def info(message: str) -> str:
         """Format an info message."""
-        return f"📋 {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\U0001f4cb {message}"  # 📋
+        else:
+            return f"[INFO] {message}"
 
     @staticmethod
     def build(message: str) -> str:
         """Format a build message."""
-        return f"🔨 {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\U0001f528 {message}"  # 🔨
+        else:
+            return f"[BUILD] {message}"
 
     @staticmethod
     def package(message: str) -> str:
         """Format a package message."""
-        return f"📦 {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\U0001f4e6 {message}"  # 📦
+        else:
+            return f"[PACKAGE] {message}"
 
     @staticmethod
     def docker(message: str) -> str:
         """Format a Docker message."""
-        return f"🐳 {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\U0001f433 {message}"  # 🐳
+        else:
+            return f"[DOCKER] {message}"
 
     @staticmethod
     def search(message: str) -> str:
         """Format a search message."""
-        return f"🔍 {message}"
+        if SafeUnicode.is_unicode_safe_environment():
+            return f"\U0001f50d {message}"  # 🔍
+        else:
+            return f"[SEARCH] {message}"
 
 
 def print_success(message: str, **kwargs) -> None:

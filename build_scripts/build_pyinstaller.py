@@ -226,7 +226,7 @@ class OSIPyInstallerBuilder:
 
     def test_executable(self):
         """Test the built executable"""
-        print("🧪 Testing executable...")
+        safe_print("[TEST] Testing executable...")
 
         exe_path = self.get_executable_path()
         if not exe_path.exists():
