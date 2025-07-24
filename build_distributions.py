@@ -15,10 +15,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "build_scripts"))
 from unicode_utils import (
     print_build,
-    print_docker,
     print_error,
     print_info,
-    print_package,
     print_success,
     print_warning,
     safe_print,
@@ -40,34 +38,7 @@ def build_executable():
         return False
 
 
-def build_portable():
-    """Build portable Python distribution."""
-    print_package("Building Portable Distribution")
-    safe_print("-" * 40)
 
-    try:
-        result = subprocess.run(
-            [sys.executable, "build_scripts/build_portable.py"], check=True
-        )
-        return result.returncode == 0
-    except subprocess.CalledProcessError:
-        print_error("Portable build failed")
-        return False
-
-
-def build_docker():
-    """Build Docker distribution."""
-    print_docker("Building Docker Distribution")
-    safe_print("-" * 40)
-
-    try:
-        result = subprocess.run(
-            [sys.executable, "build_scripts/build_docker.py"], check=True
-        )
-        return result.returncode == 0
-    except subprocess.CalledProcessError:
-        print_error("Docker build failed")
-        return False
 
 
 def test_installer():
@@ -108,27 +79,7 @@ OSI provides multiple distribution methods to accommodate different user needs a
 - [ERROR] Larger file size (~50-100MB)
 - [ERROR] Platform-specific builds needed
 
-## 3. Portable Python Distribution
-**File**: `osi-portable-*.zip`
-**Requirements**: None
-**Usage**: Extract and run launcher scripts
 
-- [OK] No Python installation required
-- [OK] Includes full Python environment
-- [OK] Easy to distribute
-- [ERROR] Large file size (~100-200MB)
-- [ERROR] Currently Windows-only
-
-## 4. Docker Container
-**Image**: `osi:latest`
-**Requirements**: Docker
-**Usage**: `docker run --rm -v "$(pwd):/workspace" osi:latest`
-
-- [OK] Consistent environment everywhere
-- [OK] Easy to update
-- [OK] Isolated from host system
-- [ERROR] Requires Docker installation
-- [ERROR] Larger resource usage
 
 ## Recommendations by Use Case
 
@@ -137,16 +88,16 @@ OSI provides multiple distribution methods to accommodate different user needs a
 - **Alternative**: PyInstaller executable
 
 ### Enterprise Deployment
-- **Primary**: Docker container
-- **Alternative**: Portable distribution
+- **Primary**: PyInstaller executable
+- **Alternative**: Self-contained installer
 
 ### Air-gapped Environments
-- **Primary**: Portable distribution
-- **Alternative**: PyInstaller executable
+- **Primary**: PyInstaller executable
+- **Alternative**: Self-contained installer
 
 ### Development/Testing
 - **Primary**: Self-contained installer
-- **Alternative**: Docker container
+- **Alternative**: PyInstaller executable
 
 ## Quick Start
 
@@ -172,18 +123,12 @@ def main():
         "--executable", action="store_true", help="Build PyInstaller executable"
     )
     parser.add_argument(
-        "--portable", action="store_true", help="Build portable distribution"
-    )
-    parser.add_argument(
-        "--docker", action="store_true", help="Build Docker distribution"
-    )
-    parser.add_argument(
         "--installer", action="store_true", help="Test installer script"
     )
 
     args = parser.parse_args()
 
-    if not any([args.all, args.executable, args.portable, args.docker, args.installer]):
+    if not any([args.all, args.executable, args.installer]):
         args.all = True  # Default to building all
 
     print("OSI Distribution Builder")
@@ -199,12 +144,6 @@ def main():
 
     if args.all or args.executable:
         results["executable"] = build_executable()
-
-    if args.all or args.portable:
-        results["portable"] = build_portable()
-
-    if args.all or args.docker:
-        results["docker"] = build_docker()
 
     # Create distribution summary
     create_distribution_summary()

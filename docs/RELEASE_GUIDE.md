@@ -49,7 +49,7 @@ Once the workflow completes:
    - `osi-macos-intel.tar.gz` and `osi-macos-intel.tar.gz.sha256`
    - `osi-macos-apple-silicon.tar.gz` and `osi-macos-apple-silicon.tar.gz.sha256`
    - `osi-linux-x64.tar.gz` and `osi-linux-x64.tar.gz.sha256`
-   - `osi-portable-windows.zip`
+
    - `quick_start.py`
    - `install_osi.py`
 
