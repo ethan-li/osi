@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
+from . import __version__
 from .config_manager import ConfigManager
 from .dependency_resolver import DependencyResolver
 from .environment_manager import EnvironmentManager
@@ -446,6 +447,10 @@ Examples:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
         help="Set logging level",
+    )
+
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
