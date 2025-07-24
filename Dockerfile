@@ -22,10 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY osi/ ./osi/
 COPY scripts/ ./scripts/
 COPY kits/ ./kits/
-COPY wheels/ ./wheels/
 
-# Create directories for OSI
-RUN mkdir -p /app/environments /app/logs
+# Create directories for OSI (including wheels directory)
+RUN mkdir -p /app/environments /app/logs /app/wheels
 
 # Create a wrapper script for OSI
 RUN echo '#!/bin/bash\npython /app/scripts/osi.py "$@"' > /usr/local/bin/osi && \
