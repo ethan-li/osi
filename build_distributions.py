@@ -38,9 +38,6 @@ def build_executable():
         return False
 
 
-
-
-
 def test_installer():
     """Test the self-contained installer."""
     safe_print("\n[TEST] Testing Self-contained Installer")

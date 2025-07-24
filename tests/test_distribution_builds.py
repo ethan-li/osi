@@ -140,10 +140,6 @@ class TestPyInstallerBuild(unittest.TestCase):
             self.skipTest("PyInstaller build took too long")
 
 
-
-
-
-
 class TestWheelDistribution(unittest.TestCase):
     """Test wheel and source distribution build."""
 
