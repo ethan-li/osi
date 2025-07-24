@@ -1,7 +1,7 @@
 # OSI Docker Container
 # This creates a self-contained OSI environment that requires no local Python installation
 
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Set working directory
 WORKDIR /app
