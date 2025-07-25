@@ -83,29 +83,7 @@ class TestDistributionWorkflows(unittest.TestCase):
         except subprocess.TimeoutExpired:
             self.skipTest("Wheel check took too long")
 
-    @patch("subprocess.run")
-    def test_docker_workflow_simulation(self, mock_run):
-        """Test Docker workflow with mocked Docker commands."""
-        # Mock successful Docker operations
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "Docker build successful"
-        mock_run.return_value.stderr = ""
 
-        # Import and test Docker build
-        sys.path.insert(0, str(self.project_root / "build_scripts"))
-        try:
-            from build_docker import build_docker_image, test_docker_image
-
-            # Test build process
-            build_result = build_docker_image()
-            self.assertTrue(build_result, "Docker build should succeed")
-
-            # Test image testing
-            test_result = test_docker_image()
-            self.assertTrue(test_result, "Docker image test should succeed")
-
-        except ImportError:
-            self.skipTest("Docker build script not importable")
 
     def test_installer_workflow_components(self):
         """Test that installer workflow has all required components."""
@@ -131,8 +109,6 @@ class TestDistributionWorkflows(unittest.TestCase):
         # Check that all build scripts exist
         required_scripts = [
             "build_pyinstaller.py",
-            "build_portable.py",
-            "build_docker.py",
         ]
 
         for script in required_scripts:
@@ -167,8 +143,6 @@ class TestDistributionWorkflows(unittest.TestCase):
             expected_sections = [
                 "Self-contained Installer",
                 "PyInstaller Executable",
-                "Portable Python Distribution",
-                "Docker Container",
             ]
 
             for section in expected_sections:
@@ -207,27 +181,7 @@ class TestDistributionArtifacts(unittest.TestCase):
                     component, content, f"Spec file should contain {component}"
                 )
 
-    def test_dockerfile_validation(self):
-        """Test Dockerfile validation."""
-        dockerfile = self.project_root / "Dockerfile"
 
-        if dockerfile.exists():
-            with open(dockerfile, "r") as f:
-                content = f.read()
-
-            # Check for required Docker instructions
-            required_instructions = [
-                "FROM python:",
-                "WORKDIR",
-                "COPY",
-                "RUN pip install",
-                "ENTRYPOINT",
-            ]
-
-            for instruction in required_instructions:
-                self.assertIn(
-                    instruction, content, f"Dockerfile should contain {instruction}"
-                )
 
     def test_setup_py_validation(self):
         """Test setup.py validation for distribution."""
@@ -289,39 +243,7 @@ class TestDistributionErrorHandling(unittest.TestCase):
         except ImportError:
             self.skipTest("build_distributions.py not importable")
 
-    @patch("subprocess.run")
-    def test_docker_build_error_handling(self, mock_run):
-        """Test Docker build error handling."""
-        # Mock failed Docker command
-        mock_run.side_effect = subprocess.CalledProcessError(1, "docker")
 
-        sys.path.insert(0, str(self.project_root))
-        try:
-            import build_distributions
-
-            # Should handle error gracefully
-            result = build_distributions.build_docker()
-            self.assertFalse(result, "Should return False on Docker build failure")
-
-        except ImportError:
-            self.skipTest("build_distributions.py not importable")
-
-    @patch("subprocess.run")
-    def test_portable_build_error_handling(self, mock_run):
-        """Test portable build error handling."""
-        # Mock failed subprocess call
-        mock_run.side_effect = subprocess.CalledProcessError(1, "python")
-
-        sys.path.insert(0, str(self.project_root))
-        try:
-            import build_distributions
-
-            # Should handle error gracefully
-            result = build_distributions.build_portable()
-            self.assertFalse(result, "Should return False on portable build failure")
-
-        except ImportError:
-            self.skipTest("build_distributions.py not importable")
 
     def test_missing_dependency_handling(self):
         """Test handling of missing build dependencies."""
@@ -358,7 +280,7 @@ class TestDistributionDocumentation(unittest.TestCase):
                 content = f.read()
 
             # Should mention distribution methods
-            distribution_terms = ["install", "distribution", "docker", "executable"]
+            distribution_terms = ["install", "distribution", "executable"]
 
             content_lower = content.lower()
             for term in distribution_terms:
