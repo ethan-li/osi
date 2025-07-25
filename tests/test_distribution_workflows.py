@@ -83,8 +83,6 @@ class TestDistributionWorkflows(unittest.TestCase):
         except subprocess.TimeoutExpired:
             self.skipTest("Wheel check took too long")
 
-
-
     def test_installer_workflow_components(self):
         """Test that installer workflow has all required components."""
         # Check that all installer components exist
@@ -181,8 +179,6 @@ class TestDistributionArtifacts(unittest.TestCase):
                     component, content, f"Spec file should contain {component}"
                 )
 
-
-
     def test_setup_py_validation(self):
         """Test setup.py validation for distribution."""
         setup_py = self.project_root / "setup.py"
@@ -242,8 +238,6 @@ class TestDistributionErrorHandling(unittest.TestCase):
 
         except ImportError:
             self.skipTest("build_distributions.py not importable")
-
-
 
     def test_missing_dependency_handling(self):
         """Test handling of missing build dependencies."""
