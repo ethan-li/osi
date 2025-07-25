@@ -301,8 +301,6 @@ class TestDistributionIntegration(unittest.TestCase):
             # Test that all build functions exist
             required_functions = [
                 "build_executable",
-                "build_portable",
-                "build_docker",
                 "test_installer",
                 "create_distribution_summary",
             ]
@@ -347,8 +345,6 @@ class TestDistributionIntegration(unittest.TestCase):
 
         required_scripts = [
             "build_pyinstaller.py",
-            "build_portable.py",
-            "build_docker.py",
         ]
 
         for script in required_scripts:

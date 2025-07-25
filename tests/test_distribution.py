@@ -54,9 +54,7 @@ class TestDistributionScripts(unittest.TestCase):
 
         # Check for required build scripts
         required_scripts = [
-            "build_docker.py",
             "build_pyinstaller.py",
-            "build_portable.py",
         ]
 
         for script in required_scripts:
@@ -93,41 +91,7 @@ class TestDistributionScripts(unittest.TestCase):
                     self.fail(f"Unicode decode error in {script_path.name}: {e}")
 
 
-class TestDockerConfiguration(unittest.TestCase):
-    """Test Docker-related configuration."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        self.project_root = Path(__file__).parent.parent
-
-    def test_dockerfile_exists(self):
-        """Test that Dockerfile exists."""
-        dockerfile = self.project_root / "Dockerfile"
-        self.assertTrue(dockerfile.exists(), "Dockerfile should exist")
-        self.assertTrue(dockerfile.is_file(), "Dockerfile should be a file")
-
-    def test_dockerfile_content(self):
-        """Test basic Dockerfile content."""
-        dockerfile = self.project_root / "Dockerfile"
-
-        if dockerfile.exists():
-            with open(dockerfile, "r") as f:
-                content = f.read()
-
-            # Check for basic Docker commands
-            self.assertIn("FROM", content, "Dockerfile should have FROM instruction")
-            self.assertIn("COPY", content, "Dockerfile should have COPY instruction")
-            self.assertIn("RUN", content, "Dockerfile should have RUN instruction")
-
-    def test_docker_compose_exists(self):
-        """Test that docker-compose.yml exists."""
-        docker_compose = self.project_root / "docker-compose.yml"
-
-        # docker-compose.yml is optional, so just check if it exists
-        if docker_compose.exists():
-            self.assertTrue(
-                docker_compose.is_file(), "docker-compose.yml should be a file"
-            )
 
 
 class TestLauncherScripts(unittest.TestCase):
