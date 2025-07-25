@@ -91,9 +91,6 @@ class TestDistributionScripts(unittest.TestCase):
                     self.fail(f"Unicode decode error in {script_path.name}: {e}")
 
 
-
-
-
 class TestLauncherScripts(unittest.TestCase):
     """Test cross-platform launcher scripts."""
 
