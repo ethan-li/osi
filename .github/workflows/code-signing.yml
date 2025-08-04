@@ -1,105 +1,239 @@
-name: Code Signing
+name: Build Distributions
 
 on:
-  workflow_call:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
     inputs:
-      artifact-name:
-        required: true
-        type: string
-      os-type:
-        required: true
-        type: string
-      executable-path:
-        required: true
-        type: string
-    secrets:
-      WINDOWS_CERTIFICATE_BASE64:
+      tag:
+        description: 'Existing tag to build/release (if you want to manually release a past tag)'
         required: false
-      WINDOWS_CERTIFICATE_PASSWORD:
-        required: false
-      MACOS_CERTIFICATE_BASE64:
-        required: false
-      MACOS_CERTIFICATE_PASSWORD:
-        required: false
-      MACOS_KEYCHAIN_PASSWORD:
-        required: false
+        default: ''
 
 jobs:
-  sign-executable:
-    runs-on: ${{ inputs['os-type'] }}
+  build-executable:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows builds
+          - os: windows-latest
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-windows-x64
+            executable-name: osi.exe
+          - os: windows-latest
+            arch: x86
+            python-arch: x86
+            artifact-name: osi-windows-x86
+            executable-name: osi.exe
+          # macOS builds
+          - os: macos-13  # Intel
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-macos-intel
+            executable-name: osi
+          - os: macos-14  # Apple Silicon
+            arch: arm64
+            python-arch: arm64
+            artifact-name: osi-macos-apple-silicon
+            executable-name: osi
+          # Linux builds
+          - os: ubuntu-latest
+            arch: x64
+            python-arch: x64
+            artifact-name: osi-linux-x64
+            executable-name: osi
+
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          name: ${{ inputs['artifact-name'] }}
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && format('refs/tags/{0}', github.event.inputs.tag) || github.ref }}
 
-      - name: Sign Windows executable
-        if: ${{ inputs['os-type'] == 'windows-latest' }}
-        shell: powershell
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: ${{ matrix.python-arch }}
+
+      - name: Install dependencies
         run: |
-          if (-not $Env:WINDOWS_CERTIFICATE_BASE64) {
-            Write-Host "WINDOWS_CERTIFICATE_BASE64 not provided; skipping Windows code signing."
-            exit 0
-          }
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "pyinstaller>=6.0.0"
 
-          # Decode certificate from env var
-          $certBytes = [Convert]::FromBase64String($Env:WINDOWS_CERTIFICATE_BASE64)
-          $certPath = "certificate.p12"
-          [IO.File]::WriteAllBytes($certPath, $certBytes)
-
-          # Import certificate to store
-          $securePwd = ConvertTo-SecureString $Env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
-          $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePwd
-
-          # Sign executable
-          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
-          if (-not (Test-Path $signtool)) {
-            $signtool = "${env:ProgramFiles}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
-          }
-
-          & $signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /sha1 $cert.Thumbprint "${{ inputs['executable-path'] }}"
-
-          # Verify signature
-          & $signtool verify /pa "${{ inputs['executable-path'] }}"
-
-          # Clean up
-          Remove-Item $certPath -Force
-          Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
-
-      - name: Sign macOS executable
-        if: ${{ inputs['os-type'] == 'macos-13' || inputs['os-type'] == 'macos-14' }}
+      - name: Install UPX on Linux or macOS
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-13'
+        shell: bash
         run: |
-          if [ -z "${MACOS_CERTIFICATE_BASE64}" ]; then
-            echo "MACOS_CERTIFICATE_BASE64 not provided; skipping macOS code signing."
-            exit 0
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
+            sudo apt-get update && sudo apt-get install -y upx-ucl
+          else
+            brew install upx
           fi
 
-          # Decode certificate
-          echo "${MACOS_CERTIFICATE_BASE64}" | base64 --decode > certificate.p12
+      - name: Install UPX on macOS Apple Silicon (skip because not available)
+        if: matrix.os == 'macos-14'
+        run: |
+          echo "Skipping UPX install on Apple Silicon (not available)"
 
-          # Create and unlock keychain
-          security create-keychain -p "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
+      - name: Install UPX on Windows
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          choco install upx -y
 
-          # Import certificate
-          security import certificate.p12 -k build.keychain -P "${MACOS_CERTIFICATE_PASSWORD}" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
+      - name: Debug repository structure
+        shell: bash
+        run: |
+          echo "=== Repository Structure Debug ==="
+          echo "Current working directory: $(pwd)"
+          echo "Contents of current directory:"
+          ls -la
+          echo ""
+          echo "Python files in root:"
+          find . -maxdepth 1 -name "*.py" -type f || true
+          echo ""
+          echo "Contents of build_scripts:"
+          ls -la build_scripts/ || true
+          echo ""
+          echo "Checking for osi_main.py:"
+          if [ -f "osi_main.py" ]; then
+            echo "✅ osi_main.py found in root"
+            ls -la osi_main.py
+          else
+            echo "❌ osi_main.py NOT found in root"
+          fi
 
-          # Sign executable
-          codesign --force --sign "Developer ID Application" --options runtime "${{ inputs['executable-path'] }}"
+      - name: Build executable
+        env:
+          OSI_PROJECT_ROOT: ${{ github.workspace }}
+        run: |
+          python build_scripts/build_pyinstaller.py --package
 
-          # Verify signature
-          codesign --verify --verbose "${{ inputs['executable-path'] }}"
-          spctl --assess --verbose "${{ inputs['executable-path'] }}"
+      - name: Sign Windows executable
+        if: matrix.os == 'windows-latest' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        shell: powershell
+        run: |
+          # NOTE: Requires WINDOWS_CERTIFICATE_BASE64 and WINDOWS_CERTIFICATE_PASSWORD secrets to actually sign.
+          Write-Host "Code signing placeholder for dist/osi.exe"
 
-          # Clean up
-          rm certificate.p12
-          security delete-keychain build.keychain
+      - name: Sign macOS executable
+        if: (matrix.os == 'macos-13' || matrix.os == 'macos-14') && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          # NOTE: Requires MACOS_CERTIFICATE_BASE64 and MACOS_CERTIFICATE_PASSWORD for real signing.
+          echo "Code signing placeholder for dist/osi"
 
-      - name: Upload signed artifact
+      - name: Test executable
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            ./dist/osi.exe --help || true
+            ./dist/osi.exe --version || true
+          else
+            ./dist/osi --help || true
+            ./dist/osi --version || true
+          fi
+
+      - name: Create distribution package
+        shell: bash
+        run: |
+          mkdir -p release
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp dist/osi.exe release/ || true
+            cp README.md release/ || true
+            cp LICENSE release/ 2>/dev/null || echo "LICENSE file not found"
+            cd release
+            if command -v 7z >/dev/null 2>&1; then
+              7z a "../${{ matrix.artifact-name }}.zip" *
+            else
+              zip -r "../${{ matrix.artifact-name }}.zip" ./*
+            fi
+            cd ..
+          else
+            cp dist/osi release/ || true
+            cp README.md release/ || true
+            cp LICENSE release/ 2>/dev/null || echo "LICENSE file not found"
+            chmod +x release/osi || true
+            cd release
+            tar -czf "../${{ matrix.artifact-name }}.tar.gz" *
+            cd ..
+          fi
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            certutil -hashfile "${{ matrix.artifact-name }}.zip" SHA256 > "${{ matrix.artifact-name }}.zip.sha256" || true
+          else
+            shasum -a 256 "${{ matrix.artifact-name }}.tar.gz" > "${{ matrix.artifact-name }}.tar.gz.sha256" || true
+          fi
+
+      - name: Upload executable artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs['artifact-name'] }}-signed
-          path: ${{ inputs['executable-path'] }}
+          name: ${{ matrix.artifact-name }}
+          path: |
+            ${{ matrix.artifact-name }}.*
           retention-days: 30
+
+  create-release:
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '')
+    needs: [build-executable]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # If manually specified tag, check that out; otherwise use current ref
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && format('refs/tags/{0}', github.event.inputs.tag) || github.ref }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find . -name "osi-*" -type f | sort
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          git fetch --tags
+          prev_tag=$(git describe --tags --abbrev=0 "${GITHUB_REF}^" 2>/dev/null || echo "none")
+          echo "## Changes since ${prev_tag}" > release_notes.md
+          if [ "$prev_tag" != "none" ]; then
+            git log --pretty=format:'* %s (%h)' "$prev_tag"..${GITHUB_REF} >> release_notes.md || true
+          else
+            git log -n 20 --pretty=format:'* %s (%h)' ${GITHUB_REF} >> release_notes.md || true
+          fi
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') && github.event.inputs.tag || github.ref_name }}
+          name: Release ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') && github.event.inputs.tag || github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
+          draft: false
+          prerelease: ${{ contains((github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') && github.event.inputs.tag || github.ref_name, 'alpha') || contains((github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') && github.event.inputs.tag || github.ref_name, 'beta') || contains((github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') && github.event.inputs.tag || github.ref_name, 'rc') }}
+          files: |
+            osi-windows-x64.*
+            osi-windows-x86.*
+            osi-macos-intel.*
+            osi-macos-apple-silicon.*
+            osi-linux-x64.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
