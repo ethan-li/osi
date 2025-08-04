@@ -210,30 +210,37 @@ jobs:
         id: notes
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           # ensure tags are available
           git fetch --tags
 
           # current tag and name
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.tag }}" != "" ]]; then
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${{ github.event.inputs.tag }}" != "" ]]; then
             current_tag="${{ github.event.inputs.tag }}"
           else
             current_tag="${GITHUB_REF_NAME}"
           fi
 
-          # 计算上一个 tag（没有则 fallback）
-          prev_tag=$(git describe --tags --abbrev=0 "${current_tag}^" 2>/dev/null || echo "none")
+          echo "Using tag: ${current_tag}"
 
-          # 生成变更日志
+          # previous tag
+          prev_tag=$(git describe --tags --abbrev=0 "${current_tag}^" 2>/dev/null || echo "none")
+          echo "Previous tag: ${prev_tag}"
+
+          # generate release notes
           {
             echo "## Changes since ${prev_tag}"
-            if [ "$prev_tag" != "none" ]; then
+            if [[ "$prev_tag" != "none" ]]; then
               git log --pretty=format:'* %s (%h)' "$prev_tag".."${current_tag}" || true
             else
               git log -n 20 --pretty=format:'* %s (%h)' "${current_tag}" || true
             fi
           } > release_notes.md
+
+          echo "---- release_notes.md ----"
+          cat release_notes.md
+          echo "--------------------------"
 
           # set delimiter
           DELIM="RELEASE_NOTES_$(date +%s)_EOF"
