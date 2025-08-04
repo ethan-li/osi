@@ -208,21 +208,41 @@ jobs:
 
       - name: Generate release notes
         id: notes
+        shell: bash
         run: |
+          set -e
+
+          # ensure tags are available
           git fetch --tags
-          prev_tag=$(git describe --tags --abbrev=0 "${GITHUB_REF}^" 2>/dev/null || echo "none")
+
+          # current tag and name
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.tag }}" != "" ]]; then
+            current_tag="${{ github.event.inputs.tag }}"
+          else
+            current_tag="${GITHUB_REF_NAME}"
+          fi
+
+          # 计算上一个 tag（没有则 fallback）
+          prev_tag=$(git describe --tags --abbrev=0 "${current_tag}^" 2>/dev/null || echo "none")
+
+          # 生成变更日志
           {
             echo "## Changes since ${prev_tag}"
             if [ "$prev_tag" != "none" ]; then
-              git log --pretty=format:'* %s (%h)' "$prev_tag"..${GITHUB_REF} || true
+              git log --pretty=format:'* %s (%h)' "$prev_tag".."${current_tag}" || true
             else
-              git log -n 20 --pretty=format:'* %s (%h)' ${GITHUB_REF} || true
+              git log -n 20 --pretty=format:'* %s (%h)' "${current_tag}" || true
             fi
           } > release_notes.md
-          DELIM="RELEASE_NOTES_EOF"
-          echo "body<<${DELIM}" >> "$GITHUB_OUTPUT"
+
+          # set delimiter
+          DELIM="RELEASE_NOTES_$(date +%s)_EOF"
+
+          # multiline output
+          printf "body<<%s\n" "$DELIM" >> "$GITHUB_OUTPUT"
           cat release_notes.md >> "$GITHUB_OUTPUT"
-          echo "${DELIM}" >> "$GITHUB_OUTPUT"
+          printf "%s\n" "$DELIM" >> "$GITHUB_OUTPUT"
+
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
