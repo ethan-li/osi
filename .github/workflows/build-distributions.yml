@@ -166,75 +166,57 @@ jobs:
         retention-days: 30
 
 
-
   create-release:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build-executable]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        merge-multiple: true
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
 
-    - name: List downloaded artifacts
-      run: |
-        echo "Downloaded artifacts:"
-        find . -name "osi-*" -type f | sort
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find . -name "osi-*" -type f | sort
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          osi-windows-x64.*
-          osi-windows-x86.*
-          osi-macos-intel.*
-          osi-macos-apple-silicon.*
-          osi-linux-x64.*
-          osi-portable-*.zip
-          quick_start.py
-          install_osi.py
-        body: |
-          ## OSI Release ${{ github.ref_name }}
+      - name: Generate release notes
+        id: notes
+        run: |
+          # Fetch tags so git describe works reliably
+          git fetch --tags
 
-          This release includes multiple distribution methods for maximum compatibility:
+          # Determine previous tag (fallback gracefully)
+          prev_tag=$(git describe --tags --abbrev=0 "${GITHUB_REF}^" 2>/dev/null || echo "none")
+          echo "## Changes since ${prev_tag}" > release_notes.md
 
-          ### 🚀 Quick Start (Recommended for Python users)
-          - Download `quick_start.py` and run `python quick_start.py`
-          - Automatically sets up OSI with all dependencies
+          if [ "$prev_tag" != "none" ]; then
+            git log --pretty=format:'* %s (%h)' "$prev_tag"..${GITHUB_REF} >> release_notes.md || true
+          else
+            git log -n 20 --pretty=format:'* %s (%h)' ${GITHUB_REF} >> release_notes.md || true
+          fi
 
-          ### 📦 Self-contained Installer (Recommended for most users)
-          - Download `install_osi.py` and run `python install_osi.py`
-          - Creates isolated environment with launcher scripts
+          # Export as output for the release action (new GITHUB_OUTPUT syntax)
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          ### 💻 Standalone Executables (No Python required)
-
-          **Windows:**
-          - `osi-windows-x64.zip` - Windows 64-bit (Intel/AMD)
-          - `osi-windows-x86.zip` - Windows 32-bit (legacy systems)
-
-          **macOS:**
-          - `osi-macos-intel.tar.gz` - macOS Intel processors
-          - `osi-macos-apple-silicon.tar.gz` - macOS Apple Silicon (M1/M2/M3)
-
-          **Linux:**
-          - `osi-linux-x64.tar.gz` - Linux 64-bit (Intel/AMD)
-
-          ### 🔐 Security & Verification
-          - All executables include SHA256 checksums (`.sha256` files)
-          - Built with PyInstaller 6.0+ on GitHub Actions runners
-          - Source code and build process are fully transparent
-
-          ### 📖 Documentation
-          - See [README.md](README.md) for usage instructions
-          - Check [DISTRIBUTION_GUIDE.md](DISTRIBUTION_GUIDE.md) for detailed deployment options
-
-          ### 🆘 Support
-          - Report issues: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
-          - Documentation: [Project Wiki](https://github.com/${{ github.repository }}/wiki)
-        draft: false
-        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          files: |
+            osi-windows-x64.*
+            osi-windows-x86.*
+            osi-macos-intel.*
+            osi-macos-apple-silicon.*
+            osi-linux-x64.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
