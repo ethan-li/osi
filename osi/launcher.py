@@ -512,11 +512,13 @@ def show_licenses() -> int:
     license_locations = []
 
     # For PyInstaller executables, check the bundle directory
-    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
         # PyInstaller bundle - license file should be in the bundle root
         license_locations.append(Path(sys._MEIPASS) / "THIRD_PARTY_LICENSES.txt")
         # Also try the executable directory
-        license_locations.append(Path(sys.executable).parent / "THIRD_PARTY_LICENSES.txt")
+        license_locations.append(
+            Path(sys.executable).parent / "THIRD_PARTY_LICENSES.txt"
+        )
 
     # For development installations, check the project root
     license_locations.append(Path(__file__).parent.parent / "THIRD_PARTY_LICENSES.txt")
@@ -528,7 +530,7 @@ def show_licenses() -> int:
     for license_file in license_locations:
         if license_file.exists():
             try:
-                with open(license_file, 'r', encoding='utf-8') as f:
+                with open(license_file, "r", encoding="utf-8") as f:
                     print(f.read())
                 return 0
             except Exception as e:
@@ -537,13 +539,15 @@ def show_licenses() -> int:
 
     # If no license file found, show helpful message
     print("Third-party license information not available.")
-    print("This may be a development installation or the license file was not included.")
+    print(
+        "This may be a development installation or the license file was not included."
+    )
     print("License information should be included with distributed executables.")
 
     # Debug information for troubleshooting
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         print(f"\nDebug: Running as PyInstaller executable")
-        if hasattr(sys, '_MEIPASS'):
+        if hasattr(sys, "_MEIPASS"):
             print(f"Debug: Bundle directory: {sys._MEIPASS}")
     else:
         print(f"\nDebug: Running as Python script")
@@ -571,7 +575,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         args = parser.parse_args(argv)
 
         # Handle license display
-        if hasattr(args, 'licenses') and args.licenses:
+        if hasattr(args, "licenses") and args.licenses:
             return show_licenses()
 
         # Set up logging
