@@ -211,15 +211,18 @@ jobs:
         run: |
           git fetch --tags
           prev_tag=$(git describe --tags --abbrev=0 "${GITHUB_REF}^" 2>/dev/null || echo "none")
-          echo "## Changes since ${prev_tag}" > release_notes.md
-          if [ "$prev_tag" != "none" ]; then
-            git log --pretty=format:'* %s (%h)' "$prev_tag"..${GITHUB_REF} >> release_notes.md || true
-          else
-            git log -n 20 --pretty=format:'* %s (%h)' ${GITHUB_REF} >> release_notes.md || true
-          fi
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          cat release_notes.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          {
+            echo "## Changes since ${prev_tag}"
+            if [ "$prev_tag" != "none" ]; then
+              git log --pretty=format:'* %s (%h)' "$prev_tag"..${GITHUB_REF} || true
+            else
+              git log -n 20 --pretty=format:'* %s (%h)' ${GITHUB_REF} || true
+            fi
+          } > release_notes.md
+          DELIM="RELEASE_NOTES_EOF"
+          echo "body<<${DELIM}" >> "$GITHUB_OUTPUT"
+          cat release_notes.md >> "$GITHUB_OUTPUT"
+          echo "${DELIM}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
