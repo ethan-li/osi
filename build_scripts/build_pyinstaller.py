@@ -320,17 +320,26 @@ For more information, visit: https://github.com/ethan-li/osi
 
         try:
             # Import the license reporter
-            license_script = self.project_root / "build_scripts" / "generate_license_report.py"
+            license_script = (
+                self.project_root / "build_scripts" / "generate_license_report.py"
+            )
             if not license_script.exists():
                 print_warning("License report generator not found")
                 return False
 
             # Generate license report (using legacy mode for backward compatibility)
-            result = subprocess.run([
-                sys.executable, str(license_script),
-                "--legacy-mode", "--runtime-only",
-                "--output", str(self.project_root / "THIRD_PARTY_LICENSES.txt")
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(license_script),
+                    "--legacy-mode",
+                    "--runtime-only",
+                    "--output",
+                    str(self.project_root / "THIRD_PARTY_LICENSES.txt"),
+                ],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 print_success("License report generated: THIRD_PARTY_LICENSES.txt")
