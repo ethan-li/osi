@@ -314,6 +314,35 @@ For more information, visit: https://github.com/ethan-li/osi
         print_success(f"Distribution package created: {archive_path}")
         return archive_path
 
+    def generate_license_report(self):
+        """Generate license report for legal compliance"""
+        safe_print("[LEGAL] Generating license report for third-party dependencies...")
+
+        try:
+            # Import the license reporter
+            license_script = self.project_root / "build_scripts" / "generate_license_report.py"
+            if not license_script.exists():
+                print_warning("License report generator not found")
+                return False
+
+            # Generate license report (using legacy mode for backward compatibility)
+            result = subprocess.run([
+                sys.executable, str(license_script),
+                "--legacy-mode", "--runtime-only",
+                "--output", str(self.project_root / "THIRD_PARTY_LICENSES.txt")
+            ], capture_output=True, text=True)
+
+            if result.returncode == 0:
+                print_success("License report generated: THIRD_PARTY_LICENSES.txt")
+                return True
+            else:
+                print_warning(f"License report generation failed: {result.stderr}")
+                return False
+
+        except Exception as e:
+            print_warning(f"License report generation error: {e}")
+            return False
+
     def build(self, debug=False, test=True, package=True):
         """Complete build process"""
         safe_print(f"[LAUNCH] Starting OSI PyInstaller build for {self.platform}")
@@ -335,6 +364,9 @@ For more information, visit: https://github.com/ethan-li/osi
             if test:
                 if not self.test_executable():
                     print_warning("Executable test failed, but build completed")
+
+            # Generate license report for legal compliance
+            self.generate_license_report()
 
             # Create distribution package
             if package:

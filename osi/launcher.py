@@ -453,6 +453,10 @@ Examples:
         "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
+    parser.add_argument(
+        "--licenses", action="store_true", help="Show third-party license information"
+    )
+
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # List command
@@ -499,6 +503,58 @@ Examples:
     return parser
 
 
+def show_licenses() -> int:
+    """Display third-party license information."""
+    import sys
+
+    # Try multiple locations for the license file to support both
+    # development and PyInstaller executable environments
+    license_locations = []
+
+    # For PyInstaller executables, check the bundle directory
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        # PyInstaller bundle - license file should be in the bundle root
+        license_locations.append(Path(sys._MEIPASS) / "THIRD_PARTY_LICENSES.txt")
+        # Also try the executable directory
+        license_locations.append(Path(sys.executable).parent / "THIRD_PARTY_LICENSES.txt")
+
+    # For development installations, check the project root
+    license_locations.append(Path(__file__).parent.parent / "THIRD_PARTY_LICENSES.txt")
+
+    # Also check current working directory as fallback
+    license_locations.append(Path.cwd() / "THIRD_PARTY_LICENSES.txt")
+
+    # Try each location until we find the file
+    for license_file in license_locations:
+        if license_file.exists():
+            try:
+                with open(license_file, 'r', encoding='utf-8') as f:
+                    print(f.read())
+                return 0
+            except Exception as e:
+                print(f"Error reading license file {license_file}: {e}")
+                continue
+
+    # If no license file found, show helpful message
+    print("Third-party license information not available.")
+    print("This may be a development installation or the license file was not included.")
+    print("License information should be included with distributed executables.")
+
+    # Debug information for troubleshooting
+    if getattr(sys, 'frozen', False):
+        print(f"\nDebug: Running as PyInstaller executable")
+        if hasattr(sys, '_MEIPASS'):
+            print(f"Debug: Bundle directory: {sys._MEIPASS}")
+    else:
+        print(f"\nDebug: Running as Python script")
+
+    print(f"Debug: Searched locations:")
+    for location in license_locations:
+        print(f"  - {location} (exists: {location.exists()})")
+
+    return 1
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     """
     Main entry point for the OSI launcher.
@@ -513,6 +569,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         # Parse arguments
         parser = create_parser()
         args = parser.parse_args(argv)
+
+        # Handle license display
+        if hasattr(args, 'licenses') and args.licenses:
+            return show_licenses()
 
         # Set up logging
         log_level = "DEBUG" if args.verbose else args.log_level

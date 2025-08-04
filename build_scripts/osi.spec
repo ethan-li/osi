@@ -80,6 +80,14 @@ wheels_dir = project_root / 'wheels'
 if wheels_dir.exists():
     datas.append((str(wheels_dir), 'wheels'))
 
+# Include third-party license file for legal compliance
+license_file = project_root / 'THIRD_PARTY_LICENSES.txt'
+if license_file.exists():
+    datas.append((str(license_file), '.'))
+    print(f"[INFO] Including license file: {license_file}")
+else:
+    print(f"[WARNING] License file not found: {license_file}")
+
 # Include any configuration templates
 config_files = []
 for config_file in project_root.glob('*.toml'):
