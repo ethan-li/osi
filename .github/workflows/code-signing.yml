@@ -26,69 +26,80 @@ on:
 
 jobs:
   sign-executable:
-    runs-on: ${{ inputs.os-type }}
+    runs-on: ${{ inputs['os-type'] }}
     steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: ${{ inputs.artifact-name }}
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs['artifact-name'] }}
 
-    - name: Sign Windows executable
-      if: inputs.os-type == 'windows-latest' && secrets.WINDOWS_CERTIFICATE_BASE64 != ''
-      shell: powershell
-      run: |
-        # Decode certificate
-        $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}")
-        $certPath = "certificate.p12"
-        [IO.File]::WriteAllBytes($certPath, $certBytes)
-        
-        # Import certificate to store
-        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString "${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}" -AsPlainText -Force)
-        
-        # Sign executable
-        $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
-        if (-not (Test-Path $signtool)) {
-          $signtool = "${env:ProgramFiles}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
-        }
-        
-        & $signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /sha1 $cert.Thumbprint "${{ inputs.executable-path }}"
-        
-        # Verify signature
-        & $signtool verify /pa "${{ inputs.executable-path }}"
-        
-        # Clean up
-        Remove-Item $certPath -Force
-        Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
+      - name: Sign Windows executable
+        if: ${{ inputs['os-type'] == 'windows-latest' }}
+        shell: powershell
+        run: |
+          if (-not $Env:WINDOWS_CERTIFICATE_BASE64) {
+            Write-Host "WINDOWS_CERTIFICATE_BASE64 not provided; skipping Windows code signing."
+            exit 0
+          }
 
-    - name: Sign macOS executable
-      if: (inputs.os-type == 'macos-13' || inputs.os-type == 'macos-14') && secrets.MACOS_CERTIFICATE_BASE64 != ''
-      run: |
-        # Decode certificate
-        echo "${{ secrets.MACOS_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
-        
-        # Create keychain
-        security create-keychain -p "${{ secrets.MACOS_KEYCHAIN_PASSWORD }}" build.keychain
-        security default-keychain -s build.keychain
-        security unlock-keychain -p "${{ secrets.MACOS_KEYCHAIN_PASSWORD }}" build.keychain
-        
-        # Import certificate
-        security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_KEYCHAIN_PASSWORD }}" build.keychain
-        
-        # Sign executable
-        codesign --force --sign "Developer ID Application" --options runtime "${{ inputs.executable-path }}"
-        
-        # Verify signature
-        codesign --verify --verbose "${{ inputs.executable-path }}"
-        spctl --assess --verbose "${{ inputs.executable-path }}"
-        
-        # Clean up
-        rm certificate.p12
-        security delete-keychain build.keychain
+          # Decode certificate from env var
+          $certBytes = [Convert]::FromBase64String($Env:WINDOWS_CERTIFICATE_BASE64)
+          $certPath = "certificate.p12"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
 
-    - name: Upload signed artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ inputs.artifact-name }}-signed
-        path: ${{ inputs.executable-path }}
-        retention-days: 30
+          # Import certificate to store
+          $securePwd = ConvertTo-SecureString $Env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePwd
+
+          # Sign executable
+          $signtool = "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
+          if (-not (Test-Path $signtool)) {
+            $signtool = "${env:ProgramFiles}\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
+          }
+
+          & $signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /sha1 $cert.Thumbprint "${{ inputs['executable-path'] }}"
+
+          # Verify signature
+          & $signtool verify /pa "${{ inputs['executable-path'] }}"
+
+          # Clean up
+          Remove-Item $certPath -Force
+          Remove-Item "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
+
+      - name: Sign macOS executable
+        if: ${{ inputs['os-type'] == 'macos-13' || inputs['os-type'] == 'macos-14' }}
+        run: |
+          if [ -z "${MACOS_CERTIFICATE_BASE64}" ]; then
+            echo "MACOS_CERTIFICATE_BASE64 not provided; skipping macOS code signing."
+            exit 0
+          fi
+
+          # Decode certificate
+          echo "${MACOS_CERTIFICATE_BASE64}" | base64 --decode > certificate.p12
+
+          # Create and unlock keychain
+          security create-keychain -p "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
+
+          # Import certificate
+          security import certificate.p12 -k build.keychain -P "${MACOS_CERTIFICATE_PASSWORD}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${MACOS_KEYCHAIN_PASSWORD}" build.keychain
+
+          # Sign executable
+          codesign --force --sign "Developer ID Application" --options runtime "${{ inputs['executable-path'] }}"
+
+          # Verify signature
+          codesign --verify --verbose "${{ inputs['executable-path'] }}"
+          spctl --assess --verbose "${{ inputs['executable-path'] }}"
+
+          # Clean up
+          rm certificate.p12
+          security delete-keychain build.keychain
+
+      - name: Upload signed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs['artifact-name'] }}-signed
+          path: ${{ inputs['executable-path'] }}
+          retention-days: 30
